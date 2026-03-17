@@ -15,7 +15,7 @@ export default function Sidebar() {
 
         {/* Title */}
         <div className="mb-12">
-            <img src="/images/logo1.png" alt="Deskripsi gambar" />
+            <img src="/images/logokeris.png" alt="Deskripsi gambar" />
         </div>
 
         {/* Menu */}
