@@ -39,7 +39,10 @@ const Peringkat = () => {
   }
 
   return (
-    <div className="w-full min-h-screen p-6 font-lora" style={bgStyle}>
+    <div 
+  className="w-full min-h-screen p-6 pt-28 xl:pt-6 font-lora" 
+  style={bgStyle}
+>
 
       {/* Title */}
       <h1 className="text-3xl font-bold text-center text-[#5c3b1e] mb-10">

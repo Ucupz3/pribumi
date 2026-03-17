@@ -23,7 +23,7 @@ export default function UserCard() {
 
   return (
     <div className="fixed font-lora flex items-center
-      w-[260px] sm:w-[320px] lg:w-[420px]
+
     ">
 
       {/* Avatar */}
@@ -33,7 +33,7 @@ export default function UserCard() {
         <div className="
           rounded-full border-[3px] lg:border-[4px] border-[#BD9B2C]
           overflow-hidden bg-gray-200 shadow-lg
-          w-14 h-14 sm:w-18 sm:h-18 lg:w-24 lg:h-24
+          w-16 h-16 sm:w-20 sm:h-20 lg:w-[38%] lg:h-[38%]
         ">
           {user.avatar ? (
             <img
@@ -54,7 +54,7 @@ export default function UserCard() {
         className="
           border-[3px] lg:border-[4px] border-[#BD9B2C] rounded-lg shadow-md
           bg-cover bg-center
-          w-44 sm:w-52 lg:w-56
+          w-44 sm:w-48 lg:w-52
           px-4 lg:px-6
           py-1
         "
@@ -63,7 +63,7 @@ export default function UserCard() {
         {/* Name */}
         <h2 className="
           font-bold text-[#7a3b1c] truncate
-          text-sm sm:text-base lg:text-xl
+          text-sm sm:text-base lg:text-lg
           ml-6 sm:ml-7 lg:ml-8
         ">
           {user.nama}
@@ -75,7 +75,7 @@ export default function UserCard() {
           mt-1 lg:mt-2
           mb-1
         ">
-          <span className="font-bold text-[#7a3b1c] text-sm lg:text-xl">XP</span>
+          <span className="font-bold text-[#7a3b1c] text-sm lg:text-lg">XP</span>
           <div className="
             bg-yellow-100 border-2 border-[#BD9B2C] rounded-full overflow-hidden
             w-20 sm:w-24 lg:w-32

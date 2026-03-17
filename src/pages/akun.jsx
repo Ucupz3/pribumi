@@ -257,7 +257,7 @@ const Akun = () => {
               <p className="text-xl font-bold text-[#5c4033]">Level {user.level}</p>
               <div className="flex flex-col gap-2">
                 <p className="text-xl text-[#5c4033] font-bold">XP</p>
-                <div className="w-full h-7 bg-[#e8dcc0] rounded-full border-2 p-1 border-[#c9b896] overflow-hidden shadow-inner">
+                <div className="w-52 md:w-full h-7 bg-[#e8dcc0] rounded-full border-2 p-1 border-[#c9b896] overflow-hidden shadow-inner">
                   <div
                     className="h-full bg-gradient-to-r from-[#81691A] to-[#BD9B2C] rounded-full flex items-center justify-end pr-3 transition-all duration-700"
                     style={{ width: `${xpPersen}%` }}
@@ -274,10 +274,10 @@ const Akun = () => {
 
         {/* Achievements */}
         <div className="mb-12">
-          <h2 className="lg:text-3xl text-xl font-medium text-[#5c4033] font-serif mb-8 border-b-2 border-[#C2AF9F] pb-2">
+          <h2 className="lg:text-3xl text-xl font-medium text-[#5c4033] font-serif mb-10 border-b-2 border-[#C2AF9F] pb-2">
             Achievements
           </h2>
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-6 justify-items-center border-b-2 border-[#C2AF9F] pb-12 mb-6">
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-6 justify-items-center border-b-2 border-[#C2AF9F] pb-8 mb-6">
             {BADGE_CATEGORIES.map((cat) => {
               const tierIndex = cat.cek(user.stats);
               const isUnlocked = tierIndex >= 0;
