@@ -116,15 +116,14 @@ return (
 
       {/* ===== BAGIAN ATAS ===== */}
       <div
-        className="w-full shadow-lg flex-shrink-0"
-        style={{
-          backgroundImage: "url('/images/bgfix.png')",
-          backgroundSize: "100% 100%",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          height: "40vh",
-        }}
-      />
+  className="w-full shadow-lg flex-shrink-0 h-[20vh] sm:h-[25vh] md:h-[30vh] lg:h-[40vh]"
+  style={{
+    backgroundImage: "url('/images/bgfix.png')",
+    backgroundSize: "100% 100%",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+  }}
+/>
 
       {/* ===== BAGIAN BAWAH ===== */}
       <div className="flex-1 px-6 md:px-12 py-6 lg:overflow-hidden">

@@ -11,7 +11,7 @@ export default function MainLayout({ children }) {
     <div className="flex min-h-screen">
       <Sidebar />
 
-      <main className="flex-1 lg:ml-56 bg-gray-100 min-h-screen font-lora relative">
+      <main className="flex-1 lg:ml-56 bg-gray-100 min-h-screen font-lora relative pb-20 lg:pb-0">
 
         {showUserCard && (
           <div className="absolute 

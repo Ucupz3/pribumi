@@ -7,6 +7,7 @@ import Peta from "./pages/peta";
 import Quest from "./pages/quest";
 import Login from "./auth/login";
 import Register from "./auth/register";
+import CharacterSelect from "./pages/characterselect";
 
 function App() {
   return (
@@ -51,7 +52,7 @@ function App() {
         <Route path="/quest/:slug" element={<Quest />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-
+        <Route path="/character-select" element={<CharacterSelect />} />
       </Routes>
     </BrowserRouter>
   );

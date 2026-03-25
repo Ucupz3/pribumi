@@ -13,7 +13,7 @@ const Peta = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col font-lora relative">
+    <div className="h-screen flex flex-col font-lora relative overflow-hidden touch-none">
 
       {/* LAYER BACKGROUND */}
       <div
@@ -30,7 +30,7 @@ const Peta = () => {
       <div className="absolute inset-0 bg-black/20" />
 
       {/* LAYER PETA */}
-      <div className="relative w-full h-[calc(100vh-120px)] flex items-center justify-center">
+      <div className="relative w-full flex-1 flex items-center justify-center overflow-hidden">
         {loading ? (
           <div className="flex flex-col items-center gap-4">
             <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />

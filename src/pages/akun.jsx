@@ -7,11 +7,11 @@ async function getUserProfile() {
     nama: "Kimi Hime",
     avatar: "/images/ppcowo.jpeg",
     level: 42,
-    xp: 15000,
+    xp: 10000,
     xpMax: 20000,
     stats: {
-      totalXP: 750,
-      pulauDijelajahi: 2,
+      totalXP: 10000,
+      pulauDijelajahi: 4,
       questSelesai: 5,
       menitBermain: 90,
       pulauKomplit: 1,
@@ -19,7 +19,6 @@ async function getUserProfile() {
   };
 }
 
-// Avatar yang tersedia — nanti bisa ditambah
 const AVATAR_OPTIONS = [
   "/images/ppcowo.jpeg",
   "/images/ppcowo2.jpeg",
@@ -29,7 +28,6 @@ const AVATAR_OPTIONS = [
   "/images/ppcewek3.jpeg",
 ];
 
-// Nama yang sudah dipakai user lain — nanti dari API
 const NAMA_TERPAKAI = ["Ricky", "Thomas", "Jatmiko", "Dela", "Azka"];
 
 const bgStyle = {
@@ -38,6 +36,23 @@ const bgStyle = {
   backgroundPosition: "center",
   backgroundRepeat: "no-repeat",
 };
+
+// ===== GEMBOK SVG =====
+function GembokIcon({ className }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 64 64">
+      <path fill="#ffce31" d="M2 28.3v31.4C2 62.1 3.9 64 6.3 64h51.4c2.4 0 4.3-1.9 4.3-4.3V28.3z"/>
+      <path fill="#ff8736" d="M62 24c0-2.4-1.9-4.3-4.3-4.3H6.3C3.9 19.6 2 21.6 2 24v4.3h60z"/>
+      <g fill="#3e4347">
+        <ellipse cx="12.4" cy="23.5" rx="5.9" ry="2.5"/>
+        <ellipse cx="51.6" cy="23.5" rx="5.9" ry="2.5"/>
+      </g>
+      <path fill="#dfe9ef" d="M32 0C19.1 0 8.6 10.6 8.6 23.5c0 .8 1.6 1.4 3.8 1.4v-1.4c.8-11 9.3-19.7 19.6-19.7c10.4 0 18.9 8.7 19.6 19.7v1.4c2.2 0 3.8-.6 3.8-1.4C55.4 10.6 44.9 0 32 0"/>
+      <path fill="#b0bdc6" d="M51.6 23.5C50.9 12.6 42.4 3.9 32 3.9s-18.9 8.7-19.6 19.7V25c2.2 0 4.2-.6 4.2-1.4C16.5 16.4 22.5 8 32 8s15.5 8.4 15.5 15.5c0 .8 2 1.4 4.2 1.4z"/>
+      <path fill="#3e4347" d="m36.6 56.4l-1.9-12.3c1.1-.8 1.9-2.2 1.9-3.7c0-2.5-2-4.6-4.6-4.6s-4.6 2.1-4.6 4.6c0 1.5.7 2.9 1.9 3.7l-1.9 12.3z"/>
+    </svg>
+  );
+}
 
 // ===== POPUP EDIT PROFIL =====
 function EditPopup({ user, onClose, onSave }) {
@@ -64,8 +79,7 @@ function EditPopup({ user, onClose, onSave }) {
   const handleSave = async () => {
     if (namaError || !nama.trim()) return;
     setLoading(true);
-    await new Promise(res => setTimeout(res, 500)); // simulasi API
-    // Nanti ganti dengan: await fetch("https://api-temen.com/user/update", { method: "PUT", body: JSON.stringify({ nama, avatar }) })
+    await new Promise(res => setTimeout(res, 500));
     onSave({ nama: nama.trim(), avatar });
     setLoading(false);
     onClose();
@@ -73,24 +87,17 @@ function EditPopup({ user, onClose, onSave }) {
 
   return (
     <>
-      {/* Overlay */}
       <div
         className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-
-      {/* Popup */}
       <div
         className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border-2 border-[#c9b896] font-lora"
         style={bgStyle}
       >
-        {/* Header */}
         <div className="px-6 py-4 border-b-2 border-[#c9b896] flex items-center justify-between">
           <p className="text-[#5c4033] font-black text-lg">Edit Profil</p>
-          <button
-            onClick={onClose}
-            className="text-[#a08060] hover:text-[#5c4033] transition-colors"
-          >
+          <button onClick={onClose} className="text-[#a08060] hover:text-[#5c4033] transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
@@ -98,15 +105,12 @@ function EditPopup({ user, onClose, onSave }) {
         </div>
 
         <div className="px-6 py-5 space-y-5">
-
-          {/* Preview avatar terpilih */}
           <div className="flex justify-center">
             <div className="w-24 h-24 rounded-full border-4 border-[#BD9B2C] overflow-hidden shadow-lg">
               <img src={avatar} alt="preview" className="w-full h-full object-cover" />
             </div>
           </div>
 
-          {/* Pilihan avatar */}
           <div>
             <p className="text-[#5c4033] text-sm font-bold mb-3">Pilih Avatar</p>
             <div className="grid grid-cols-6 gap-2">
@@ -126,16 +130,13 @@ function EditPopup({ user, onClose, onSave }) {
                     src={av}
                     alt="avatar"
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.parentElement.style.display = "none";
-                    }}
+                    onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
                   />
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Input nama */}
           <div>
             <p className="text-[#5c4033] text-sm font-bold mb-2">Nama</p>
             <input
@@ -147,8 +148,7 @@ function EditPopup({ user, onClose, onSave }) {
               style={bgStyle}
               className={`
                 w-full px-4 py-3 rounded-xl border-2 text-sm font-lora outline-none
-                text-[#5c4033] placeholder-[#b8a88a]
-                transition-all duration-200
+                text-[#5c4033] placeholder-[#b8a88a] transition-all duration-200
                 ${namaError
                   ? "border-[#8b3a3a]"
                   : nama !== user.nama
@@ -157,8 +157,6 @@ function EditPopup({ user, onClose, onSave }) {
                 }
               `}
             />
-
-            {/* Error atau counter */}
             <div className="flex justify-between mt-1.5">
               <p className={`text-xs ${namaError ? "text-[#8b3a3a] font-semibold" : "text-transparent"}`}>
                 {namaError || "ok"}
@@ -167,7 +165,6 @@ function EditPopup({ user, onClose, onSave }) {
             </div>
           </div>
 
-          {/* Tombol */}
           <div className="flex gap-3 pt-1">
             <button
               onClick={onClose}
@@ -227,7 +224,6 @@ const Akun = () => {
 
   const handleSave = (updated) => {
     setUser(prev => ({ ...prev, ...updated }));
-    // Nanti tambah: update ke API
   };
 
   return (
@@ -236,8 +232,6 @@ const Akun = () => {
 
         {/* Profile Header */}
         <div className="flex flex-col md:flex-row gap-10 items-center md:items-start mb-12">
-
-          {/* Avatar */}
           <div className="w-32 h-32 md:w-44 md:h-44 rounded-lg border-4 border-[#BD9B2C] overflow-hidden shadow-lg flex-shrink-0">
             {user.avatar ? (
               <img src={user.avatar} alt="avatar" className="w-full h-full object-cover" />
@@ -248,7 +242,6 @@ const Akun = () => {
             )}
           </div>
 
-          {/* Info */}
           <div className="flex-1 space-y-4 text-center md:text-left">
             <div className="flex flex-col gap-4 max-w-md">
               <h1 className="text-3xl md:text-3xl 2xl:text-5xl font-bold text-[#5c4033] leading-tight">
@@ -290,27 +283,26 @@ const Akun = () => {
 
               return (
                 <div key={cat.id} className="flex flex-col items-center gap-2 group">
+
+                  {/* ===== BADGE CIRCLE — YANG DIUBAH ===== */}
                   <div className={`
-                    w-20 h-20 md:w-32 md:h-32 rounded-full
+                    w-20 h-20 md:w-32 md:h-32 rounded-full overflow-hidden
                     flex items-center justify-center
-                    shadow-md hover:shadow-lg hover:scale-105
-                    transition-all duration-200 border-4
-                    ${isUnlocked
-                      ? "bg-gradient-to-br from-[#BD9B2C] to-[#81691A] border-[#BD9B2C]"
-                      : "bg-[#d4c9b0] border-[#b8a88a]"
-                    }
+                    hover:scale-105
+                    transition-all duration-200
+                    ${!isUnlocked ? "border-4 border-[#b8a88a] bg-[#d4c9b0]" : ""}
                   `}>
                     {isUnlocked ? (
-                      <span className="text-3xl md:text-5xl">{activeTier.icon}</span>
+                      <img
+                        src={activeTier.image}
+                        alt={activeTier.nama}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 md:w-12 md:h-12 opacity-40" viewBox="0 0 64 64">
-                        <path fill="#5c4033" d="M2 28.3v31.4C2 62.1 3.9 64 6.3 64h51.4c2.4 0 4.3-1.9 4.3-4.3V28.3z"/>
-                        <path fill="#7a5c42" d="M62 24c0-2.4-1.9-4.3-4.3-4.3H6.3C3.9 19.6 2 21.6 2 24v4.3h60z"/>
-                        <path fill="#a08060" d="M32 0C19.1 0 8.6 10.6 8.6 23.5c0 .8 1.6 1.4 3.8 1.4v-1.4c.8-11 9.3-19.7 19.6-19.7c10.4 0 18.9 8.7 19.6 19.7v1.4c2.2 0 3.8-.6 3.8-1.4C55.4 10.6 44.9 0 32 0"/>
-                        <path fill="#5c4033" d="m36.6 56.4l-1.9-12.3c1.1-.8 1.9-2.2 1.9-3.7c0-2.5-2-4.6-4.6-4.6s-4.6 2.1-4.6 4.6c0 1.5.7 2.9 1.9 3.7l-1.9 12.3z"/>
-                      </svg>
+                      <GembokIcon className="w-8 h-8 md:w-12 md:h-12 opacity-70" />
                     )}
                   </div>
+
                   <p className={`text-xs md:text-sm font-bold text-center ${isUnlocked ? "text-[#5c4033]" : "text-[#a08060]"}`}>
                     {cat.nama}
                   </p>
@@ -352,7 +344,6 @@ const Akun = () => {
         </div>
       </div>
 
-      {/* Popup Edit */}
       {showEdit && (
         <EditPopup
           user={user}

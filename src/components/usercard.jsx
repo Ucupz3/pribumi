@@ -27,13 +27,13 @@ export default function UserCard() {
     ">
 
       {/* Avatar */}
-      <div className="absolute
-        -left-7 sm:-left-9 lg:-left-12
-      ">
+      <div className="absolute -left-7 sm:-left-9 lg:-left-12">
         <div className="
           rounded-full border-[3px] lg:border-[4px] border-[#BD9B2C]
           overflow-hidden bg-gray-200 shadow-lg
-          w-16 h-16 sm:w-20 sm:h-20 lg:w-[38%] lg:h-[38%]
+          w-20 h-20
+          sm:w-20 sm:h-20
+          2xl:w-24 2xl:h-24
         ">
           {user.avatar ? (
             <img
@@ -54,7 +54,7 @@ export default function UserCard() {
         className="
           border-[3px] lg:border-[4px] border-[#BD9B2C] rounded-lg shadow-md
           bg-cover bg-center
-          w-44 sm:w-48 lg:w-52
+          w-44 sm:w-48 lg:w-52 2xl:w-64
           px-4 lg:px-6
           py-1
         "
@@ -63,19 +63,19 @@ export default function UserCard() {
         {/* Name */}
         <h2 className="
           font-bold text-[#7a3b1c] truncate
-          text-sm sm:text-base lg:text-lg
-          ml-6 sm:ml-7 lg:ml-8
+          text-sm sm:text-base 2xl:text-lg
+          ml-10 sm:ml-8 lg:ml-3 2xl:ml-7
         ">
           {user.nama}
         </h2>
 
         {/* XP Section */}
         <div className="flex items-center gap-2 lg:gap-3
-          ml-6 sm:ml-7 lg:ml-8
+          ml-10 sm:ml-8 lg:ml-3 2xl:ml-7
           mt-1 lg:mt-2
           mb-1
         ">
-          <span className="font-bold text-[#7a3b1c] text-sm lg:text-lg">XP</span>
+          <span className="font-bold text-[#7a3b1c] text-sm sm:text-base 2xl:text-lg">XP</span>
           <div className="
             bg-yellow-100 border-2 border-[#BD9B2C] rounded-full overflow-hidden
             w-20 sm:w-24 lg:w-32
