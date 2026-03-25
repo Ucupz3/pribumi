@@ -241,8 +241,8 @@ function isTouchDevice() {
 
 // Clamp translate agar peta tidak keluar layar terlalu jauh
 function clampTranslate(tx, ty, zoom, cW, cH) {
-  const mapW = 1200 * zoom;
-  const mapH = 675 * zoom;
+  const mapW = 1600 * zoom;
+  const mapH = 1200 * zoom;
 
   // Batas: peta masih kelihatan minimal 100px di dalam layar
   const margin = 100;
