@@ -1,43 +1,69 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? "";
+
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
-    await new Promise((res) => setTimeout(res, 800));
-    // Nanti ganti dengan: await fetch("https://api-temen.com/auth/login", { method: "POST", body: JSON.stringify({ email, password }) })
-    setLoading(false);
-    navigate("/");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.message === "INVALID_CREDENTIALS") {
+          throw new Error("Email atau password salah.");
+        } else {
+          throw new Error(data.message ?? "Login gagal, coba lagi.");
+        }
+      }
+
+      // Simpan token ke localStorage
+      // Sesuaikan key field jika backend mengembalikan nama berbeda
+      // misal: data.accessToken / data.token / data.access_token
+      const token = data.accessToken ?? data.token ?? data.access_token;
+      if (token) localStorage.setItem("token", token);
+
+      // Simpan refresh token jika ada
+      const refreshToken = data.refreshToken ?? data.refresh_token;
+      if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+
+      navigate("/");
+    } catch (e) {
+      setError(e.message ?? "Terjadi kesalahan, coba lagi.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="flex min-h-screen font-lora">
       {/* ===== KIRI — Borobudur ===== */}
       <div className="relative w-full lg:w-[65%] xl:w-[70%] hidden lg:flex items-center justify-center overflow-hidden">
-        {/* Background Borobudur */}
         <img
           src="/images/bgborobudur.png"
           alt="Borobudur"
           className="absolute inset-0 w-full h-full object-cover"
         />
-
-        {/* Overlay gelap tipis */}
         <div className="absolute inset-0 bg-black/3" />
-
-        {/* Konten tengah */}
         <div className="relative z-10 flex flex-col items-center gap-4">
-          {/* Oval putih tipis di belakang */}
           <div className="relative flex flex-col items-center">
             <div className="absolute inset-0 bg-white/15 backdrop-blur-[2px] rounded-[60%]" />
-
-            {/* Logo Nusa Quest */}
             <div className="relative z-10 flex flex-col items-center px-16 py-8">
               <img
                 src="/images/logofx.png"
@@ -48,7 +74,6 @@ export default function Login() {
                   e.currentTarget.nextSibling.style.display = "flex";
                 }}
               />
-              {/* Fallback kalau gambar ga ada */}
               <div className="hidden items-center justify-center">
                 <h1
                   className="text-5xl lg:text-7xl font-black text-[#BD9B2C] drop-shadow-2xl"
@@ -57,13 +82,9 @@ export default function Login() {
                   Nusa Quest
                 </h1>
               </div>
-
-              {/* Tulisan bawah dalam div dengan efek oval */}
               <div className="mt-3 px-4 xl:px-8 py-1 xl:py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
                 <p
-                  className="text-white font-bold
-                    text-lg xl:text-xl
-                    text-center drop-shadow-md tracking-wide"
+                  className="text-white font-bold text-lg xl:text-xl text-center drop-shadow-md tracking-wide"
                   style={{ textShadow: "1px 1px 4px rgba(0,0,0,0.6)" }}
                 >
                   Jelajahi Sejarah dan Budaya Nusantara
@@ -76,16 +97,13 @@ export default function Login() {
 
       {/* ===== KANAN — Form Login ===== */}
       <div
-        className="w-full
-        lg:w-[35%]
-        xl:w-[30%]
-        flex flex-col items-center justify-center px-8 py-10 relative overflow-hidden"
+        className="w-full lg:w-[35%] xl:w-[30%] flex flex-col items-center justify-center px-8 py-10 relative overflow-hidden"
         style={{
           backgroundImage: "url('/images/bgpaper.png')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
-          boxShadow: "-8px 0px 24px rgba(0,0,0,0.60)", // ← shadow kiri
+          boxShadow: "-8px 0px 24px rgba(0,0,0,0.60)",
         }}
       >
         {/* Corak batik pojok */}
@@ -94,8 +112,6 @@ export default function Login() {
           alt=""
           className="absolute top-0 left-0 w-[55%] lg:w-[59%] xl:w-[60%] z-90 pointer-events-none select-none"
         />
-
-        {/* Batik pojok kiri bawah */}
         <img
           src="/images/bgbatikbw.png"
           alt=""
@@ -106,14 +122,13 @@ export default function Login() {
           <div className="hidden justify-center mb-8">
             <img src="/images/logofx.png" alt="Nusa Quest" />
           </div>
+
           {/* Icon user */}
           <div className="flex justify-center mb-8">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
-              className="w-20 h-20
-                sm:w-24 sm:h-24
-                xl:w-24 xl:h-24"
+              className="w-20 h-20 sm:w-24 sm:h-24 xl:w-24 xl:h-24"
               style={{ filter: "drop-shadow(0px 4px 6px rgba(0,0,0,0.3))" }}
             >
               <path
@@ -127,6 +142,13 @@ export default function Login() {
           <h1 className="text-4xl font-lora font-semibold text-[#BD9B2C] text-center mb-8">
             LOGIN
           </h1>
+
+          {/* Error message */}
+          {error && (
+            <div className="mb-4 px-4 py-3 rounded-xl border-2 border-[#8b3a3a]/40 bg-[#8b3a3a]/10 text-[#8b3a3a] text-xs font-semibold text-center">
+              ⚠️ {error}
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleLogin} className="space-y-4">
