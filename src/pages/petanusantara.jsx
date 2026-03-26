@@ -19,15 +19,14 @@ const MAX_ZOOM = 4;
 
 function QuestCard({ marker, onBack, onMulai, isUnlocked, userXP }) {
   const progress =
-    marker.xpRequired > 0
-      ? Math.min((userXP / marker.xpRequired) * 100, 100)
+    marker.xp_required > 0
+      ? Math.min((userXP / marker.xp_required) * 100, 100)
       : 100;
 
-  const xpKurang = marker.xpRequired - userXP;
+  const xpKurang = marker.xp_required - userXP;
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center p-2 sm:p-4 md:p-6 pointer-events-none">
-      
       <div
         className="
           w-full 
@@ -47,7 +46,7 @@ function QuestCard({ marker, onBack, onMulai, isUnlocked, userXP }) {
         <div className="relative h-28 sm:h-36 md:h-40">
           <img
             src={marker.thumbnail}
-            alt={marker.nama}
+            alt={marker.name}
             className={`w-full h-full object-cover ${
               !isUnlocked ? "grayscale opacity-60" : ""
             }`}
@@ -84,14 +83,14 @@ function QuestCard({ marker, onBack, onMulai, isUnlocked, userXP }) {
           {/* TITLE */}
           <div className="absolute bottom-3 left-3">
             <p className="text-white font-black text-base sm:text-lg leading-tight">
-              {marker.nama}
+              {marker.name}
             </p>
             <p className="text-white/60 text-[10px] mt-0.5">
-              {marker.wilayah ?? "Sumatera"} · Indonesia
+              {marker.wilayah ?? "Nusantara"} · Indonesia
             </p>
           </div>
 
-          {/* XP BADGE */}
+          {/* XP BADGE - Dinamis dari marker.xp_reward */}
           <div
             className={`absolute bottom-3 right-3 font-black text-[10px] sm:text-xs px-2.5 py-1 rounded-xl shadow-lg ${
               isUnlocked
@@ -100,8 +99,8 @@ function QuestCard({ marker, onBack, onMulai, isUnlocked, userXP }) {
             }`}
           >
             {isUnlocked
-              ? `+${marker.xpReward} XP`
-              : `🔒 ${marker.xpRequired} XP`}
+              ? `+${marker.xp_reward || 0} XP`
+              : `🔒 ${marker.xp_required || 0} XP`}
           </div>
         </div>
 
@@ -111,33 +110,30 @@ function QuestCard({ marker, onBack, onMulai, isUnlocked, userXP }) {
             {marker.deskripsi}
           </p>
 
-          {/* INFO GRID */}
+          {/* INFO GRID - Sekarang mengambil dari database */}
           <div className="grid grid-cols-3 gap-1.5">
+            {/* Kolom 1: Total Soal */}
             <div className="bg-[#e8dcc0]/60 border border-[#c9b896] rounded-xl px-2 py-2 text-center">
               <p className="text-[#5c4033] font-black text-base sm:text-lg">
-                {marker.totalSoal}
+                {marker.total_soal || 0}
               </p>
-              <p className="text-[#a08060] text-[9px] mt-0.5">Soal</p>
+              <p className="text-[#a08060] text-[9px] mt-0.5 font-bold uppercase">Soal</p>
             </div>
 
+            {/* Kolom 2: XP Reward (Menggantikan Estimasi agar lebih berguna bagi pemain) */}
             <div className="bg-[#e8dcc0]/60 border border-[#c9b896] rounded-xl px-2 py-2 text-center">
-              <p className="text-[#5c4033] font-black text-xs sm:text-sm">
-                {marker.estimasiMenit ??
-                  Math.ceil(marker.totalSoal * 1.5)}{" "}
-                mnt
+              <p className="text-[#BD9B2C] font-black text-base sm:text-lg">
+                +{marker.xp_reward || 0}
               </p>
-              <p className="text-[#a08060] text-[9px] mt-0.5">
-                Estimasi
-              </p>
+              <p className="text-[#a08060] text-[9px] mt-0.5 font-bold uppercase">Reward</p>
             </div>
 
+            {/* Kolom 3: Wilayah */}
             <div className="bg-[#e8dcc0]/60 border border-[#c9b896] rounded-xl px-2 py-2 text-center">
-              <p className="text-[#5c4033] font-black text-xs sm:text-sm truncate">
-                {marker.wilayah ?? "Sumatera"}
+              <p className="text-[#5c4033] font-black text-[10px] sm:text-sm truncate">
+                {marker.wilayah || "Nusantara"}
               </p>
-              <p className="text-[#a08060] text-[9px] mt-0.5">
-                Wilayah
-              </p>
+              <p className="text-[#a08060] text-[9px] mt-0.5 font-bold uppercase">Wilayah</p>
             </div>
           </div>
 
@@ -163,7 +159,7 @@ function QuestCard({ marker, onBack, onMulai, isUnlocked, userXP }) {
                     Progress XP
                   </span>
                   <span className="text-[#5c4033] text-[9px] font-bold">
-                    {userXP} / {marker.xpRequired} XP
+                    {userXP} / {marker.xp_required} XP
                   </span>
                 </div>
 
@@ -181,7 +177,7 @@ function QuestCard({ marker, onBack, onMulai, isUnlocked, userXP }) {
 
           {/* BUTTON */}
           <button
-            onClick={() => isUnlocked && onMulai(marker.slug)}
+            onClick={() => isUnlocked && onMulai(marker)}
             disabled={!isUnlocked}
             style={isUnlocked ? bgPaper : {}}
             className={`
@@ -217,7 +213,7 @@ function QuestCard({ marker, onBack, onMulai, isUnlocked, userXP }) {
     </div>
   );
 }
-// ─────────────────────────────────────────────────────────────
+
 function calcInitial(cW, cH) {
   const mapW = 1200;
   const mapH = 675;
@@ -234,17 +230,14 @@ function calcInitial(cW, cH) {
   };
 }
 
-// Helper: apakah perangkat touch/mobile/iPad
 function isTouchDevice() {
   return window.matchMedia("(pointer: coarse)").matches;
 }
 
-// Clamp translate agar peta tidak keluar layar terlalu jauh
 function clampTranslate(tx, ty, zoom, cW, cH) {
   const mapW = 1600 * zoom;
   const mapH = 1200 * zoom;
 
-  // Batas: peta masih kelihatan minimal 100px di dalam layar
   const margin = 100;
   const minX = Math.min(0, cW - mapW + margin);
   const maxX = Math.max(0, cW - mapW) + (mapW > cW ? margin : 0);
@@ -257,7 +250,6 @@ function clampTranslate(tx, ty, zoom, cW, cH) {
   };
 }
 
-// ─────────────────────────────────────────────────────────────
 export default function PetaNusantara({ userXP = 0 }) {
   const mapRef   = useRef(null);
   const innerRef = useRef(null);
@@ -275,25 +267,23 @@ export default function PetaNusantara({ userXP = 0 }) {
   const minZoomRef   = useRef(1);
   const initialRef   = useRef({ z: 1, tx: 0, ty: 0 });
 
-  // ── Gesture state refs (hanya dipakai untuk touch) ──────────
   const gesture = useRef({
     isDragging:    false,
     lastX:         0,
     lastY:         0,
-    lastDist:      null,   // jarak dua jari terakhir (pinch)
-    startZoom:     1,      // zoom saat pinch mulai
+    lastDist:      null,
+    startZoom:     1,
     startTx:       0,
     startTy:       0,
-    startMidX:     0,      // titik tengah dua jari saat pinch mulai
+    startMidX:     0,
     startMidY:     0,
-    moved:         false,  // apakah sudah bergerak (bedain tap vs drag)
+    moved:         false,
   });
 
   useEffect(() => { zoomRef.current      = zoom;      }, [zoom]);
   useEffect(() => { translateRef.current = translate; }, [translate]);
   useEffect(() => { activeCardRef.current = activeCard; }, [activeCard]);
 
-  // ── Init zoom ────────────────────────────────────────────────
   useEffect(() => {
     const el = mapRef.current;
     if (!el) return;
@@ -315,7 +305,6 @@ export default function PetaNusantara({ userXP = 0 }) {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // ── Touch event handlers (hanya aktif di touch device) ──────
   useEffect(() => {
     const el = mapRef.current;
     if (!el || !isTouchDevice()) return;
@@ -332,9 +321,7 @@ export default function PetaNusantara({ userXP = 0 }) {
     });
 
     const onTouchStart = (e) => {
-      // Jika ada card aktif, biarkan touch di area card jalan normal
       if (activeCardRef.current) return;
-
       const g = gesture.current;
       g.moved = false;
 
@@ -357,8 +344,7 @@ export default function PetaNusantara({ userXP = 0 }) {
 
     const onTouchMove = (e) => {
       if (activeCardRef.current) return;
-
-      e.preventDefault(); // cegah scroll browser
+      e.preventDefault();
       const g = gesture.current;
       const cW = el.clientWidth;
       const cH = el.clientHeight;
@@ -366,39 +352,29 @@ export default function PetaNusantara({ userXP = 0 }) {
       if (e.touches.length === 1 && g.isDragging) {
         const dx = e.touches[0].clientX - g.lastX;
         const dy = e.touches[0].clientY - g.lastY;
-
         if (Math.abs(dx) > 3 || Math.abs(dy) > 3) g.moved = true;
-
         const raw = {
           x: translateRef.current.x + dx,
           y: translateRef.current.y + dy,
         };
         const clamped = clampTranslate(raw.x, raw.y, zoomRef.current, cW, cH);
-
         translateRef.current = clamped;
         setTranslate(clamped);
-
         g.lastX = e.touches[0].clientX;
         g.lastY = e.touches[0].clientY;
-
       } else if (e.touches.length === 2 && g.lastDist !== null) {
         const newDist  = getTouchDist(e.touches);
         const scale    = newDist / g.lastDist;
         const newZoom  = Math.min(Math.max(g.startZoom * scale, minZoomRef.current), MAX_ZOOM);
-
-        // Zoom ke arah titik tengah dua jari
-        const mid    = getTouchMid(e.touches);
-        const ratio  = newZoom / g.startZoom;
-        const newTx  = mid.x - ratio * (g.startMidX - g.startTx);
-        const newTy  = mid.y - ratio * (g.startMidY - g.startTy);
-
+        const mid      = getTouchMid(e.touches);
+        const ratio    = newZoom / g.startZoom;
+        const newTx    = mid.x - ratio * (g.startMidX - g.startTx);
+        const newTy    = mid.y - ratio * (g.startMidY - g.startTy);
         const clamped = clampTranslate(newTx, newTy, newZoom, cW, cH);
-
         zoomRef.current      = newZoom;
         translateRef.current = clamped;
         setZoom(newZoom);
         setTranslate(clamped);
-
         g.moved = true;
       }
     };
@@ -409,7 +385,6 @@ export default function PetaNusantara({ userXP = 0 }) {
         g.isDragging = false;
         g.lastDist   = null;
       } else if (e.touches.length === 1) {
-        // Sisa 1 jari setelah pinch → lanjut drag
         g.isDragging = true;
         g.lastX      = e.touches[0].clientX;
         g.lastY      = e.touches[0].clientY;
@@ -426,20 +401,16 @@ export default function PetaNusantara({ userXP = 0 }) {
       el.removeEventListener("touchmove",  onTouchMove);
       el.removeEventListener("touchend",   onTouchEnd);
     };
-  }, []); // sekali mount sudah cukup karena pakai ref
+  }, []);
 
-  // ─────────────────────────────────────────────────────────────
   const handleMarkerClick = (markerPos, markerData, isUnlocked) => {
     if (!mapRef.current) return;
-
-    // Kalau user baru saja drag (bukan tap), abaikan
     if (gesture.current.moved) {
       gesture.current.moved = false;
       return;
     }
 
     const mapRect = mapRef.current.getBoundingClientRect();
-
     const targetZoom      = 2.8;
     const horizontalFocus = 0.45;
     const verticalFocus   = 0.45;
@@ -460,23 +431,18 @@ export default function PetaNusantara({ userXP = 0 }) {
     setCardUnlocked(isUnlocked);
   };
 
-  // ─────────────────────────────────────────────────────────────
   const handleBack = () => {
     const mobile = isTouchDevice();
     const { z, tx, ty } = initialRef.current;
-
     zoomRef.current      = z;
     translateRef.current = { x: tx, y: ty };
-
     setIsAnimating(!mobile);
     setZoom(z);
     setTranslate({ x: tx, y: ty });
-
     setActiveCard(null);
     setCardUnlocked(false);
   };
 
-  // ─────────────────────────────────────────────────────────────
   return (
     <div
       ref={mapRef}
@@ -504,13 +470,13 @@ export default function PetaNusantara({ userXP = 0 }) {
       </div>
 
       {activeCard && (
-        <QuestCard
-          marker={activeCard}
-          onBack={handleBack}
-          onMulai={(slug) => navigate(`/quest/${slug}`)}
-          isUnlocked={cardUnlocked}
-          userXP={userXP}
-        />
+<QuestCard
+  marker={activeCard}
+  onBack={handleBack}
+  onMulai={(marker) => navigate(`/quest/${marker.id}`)} // ✅ pakai ID
+  isUnlocked={cardUnlocked}
+  userXP={userXP}
+/>
       )}
     </div>
   );

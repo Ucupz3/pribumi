@@ -1,51 +1,98 @@
 import { useState, useEffect } from "react";
 
 async function getUserCardData() {
-  await new Promise(res => setTimeout(res, 200));
+  // Ambil access_token dari localStorage (disimpan saat login/register)
+  const token = localStorage.getItem("access_token");
+
+  if (!token) {
+    throw new Error("NO_TOKEN");
+  }
+
+  const res = await fetch("https://nusa-api.vercel.app/auth/me", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (res.status === 401) {
+    // Token expired — hapus token dan paksa login ulang
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    throw new Error("UNAUTHORIZED");
+  }
+
+  if (!res.ok) {
+    throw new Error("FETCH_FAILED");
+  }
+
+  const data = await res.json();
+
+  // Sesuaikan dengan shape response: { success, message, data: { ... } }
+  const user = data.data;
+
   return {
-    nama: "Kimi Hime",
-    avatar: "/images/ppcowo.jpeg",
-    xp: 15000,
-    xpMax: 20000,
+    nama: user.username,
+    avatar: user.avatarUrl ?? null,
+    xp: user.xp ?? 0,
+    xpMax: user.xpMax ?? 20000,
   };
 }
 
 export default function UserCard() {
   const [user, setUser] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    getUserCardData().then(data => setUser(data));
+    getUserCardData()
+      .then((data) => setUser(data))
+      .catch((err) => setError(err.message));
   }, []);
 
-  if (!user) return null;
+  // Belum ada data & belum error → loading
+  if (!user && !error) return null;
+
+  // Tidak ada token atau unauthorized → jangan render card
+  if (error === "NO_TOKEN" || error === "UNAUTHORIZED") return null;
+
+  // Error lain (misal network error) → tetap tidak render, bisa diganti fallback UI
+  if (error) return null;
 
   const percentage = Math.min((user.xp / user.xpMax) * 100, 100);
 
   return (
-    <div className="fixed font-lora flex items-center
-
-    ">
-
+    <div className="fixed font-lora flex items-center">
       {/* Avatar */}
       <div className="absolute -left-7 sm:-left-9 lg:-left-12">
-        <div className="
-          rounded-full border-[3px] lg:border-[4px] border-[#BD9B2C]
-          overflow-hidden bg-gray-200 shadow-lg
-          w-20 h-20
-          sm:w-20 sm:h-20
-          2xl:w-24 2xl:h-24
-        ">
+        <div
+          className="
+            rounded-full border-[3px] lg:border-[4px] border-[#BD9B2C]
+            overflow-hidden bg-gray-200 shadow-lg
+            w-20 h-20
+            sm:w-20 sm:h-20
+            2xl:w-24 2xl:h-24
+          "
+        >
           {user.avatar ? (
             <img
               src={user.avatar}
               alt="avatar"
               className="w-full h-full object-cover"
+              onError={(e) => {
+                // Fallback ke inisial jika gambar gagal load
+                e.currentTarget.style.display = "none";
+                e.currentTarget.nextSibling.style.display = "flex";
+              }}
             />
-          ) : (
-            <div className="w-full h-full bg-[#e8dcc0] flex items-center justify-center text-[#5c4033] font-black text-xl lg:text-2xl">
-              {user.nama.charAt(0)}
-            </div>
-          )}
+          ) : null}
+          {/* Fallback inisial — ditampilkan jika avatar null atau gambar error */}
+          <div
+            className="w-full h-full bg-[#e8dcc0] items-center justify-center text-[#5c4033] font-black text-xl lg:text-2xl"
+            style={{ display: user.avatar ? "none" : "flex" }}
+          >
+            {user.nama.charAt(0).toUpperCase()}
+          </div>
         </div>
       </div>
 
@@ -61,26 +108,35 @@ export default function UserCard() {
         style={{ backgroundImage: "url('/images/bgpaper.png')" }}
       >
         {/* Name */}
-        <h2 className="
-          font-bold text-[#7a3b1c] truncate
-          text-sm sm:text-base 2xl:text-lg
-          ml-10 sm:ml-8 lg:ml-3 2xl:ml-7
-        ">
+        <h2
+          className="
+            font-bold text-[#7a3b1c] truncate
+            text-sm sm:text-base 2xl:text-lg
+            ml-10 sm:ml-8 lg:ml-3 2xl:ml-7
+          "
+        >
           {user.nama}
         </h2>
 
         {/* XP Section */}
-        <div className="flex items-center gap-2 lg:gap-3
-          ml-10 sm:ml-8 lg:ml-3 2xl:ml-7
-          mt-1 lg:mt-2
-          mb-1
-        ">
-          <span className="font-bold text-[#7a3b1c] text-sm sm:text-base 2xl:text-lg">XP</span>
-          <div className="
-            bg-yellow-100 border-2 border-[#BD9B2C] rounded-full overflow-hidden
-            w-20 sm:w-24 lg:w-32
-            h-2.5 lg:h-3
-          ">
+        <div
+          className="
+            flex items-center gap-2 lg:gap-3
+            ml-10 sm:ml-8 lg:ml-3 2xl:ml-7
+            mt-1 lg:mt-2
+            mb-1
+          "
+        >
+          <span className="font-bold text-[#7a3b1c] text-sm sm:text-base 2xl:text-lg">
+            XP
+          </span>
+          <div
+            className="
+              bg-yellow-100 border-2 border-[#BD9B2C] rounded-full overflow-hidden
+              w-20 sm:w-24 lg:w-32
+              h-2.5 lg:h-3
+            "
+          >
             <div
               className="h-full bg-gradient-to-r from-red-800 to-orange-500 transition-all duration-700"
               style={{ width: `${percentage}%` }}

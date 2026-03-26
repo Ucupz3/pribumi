@@ -1,21 +1,36 @@
+// ✅ PETA.JSX - ganti useEffect getUserXP dengan ini
+
 import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabase";
 import PetaNusantara from "./petanusantara";
-import { getUserXP } from "../api/petaApi";
 
 const Peta = () => {
   const [userXP, setUserXP] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getUserXP()
-      .then(data => setUserXP(data.xp))
-      .finally(() => setLoading(false));
+    const fetchXP = async () => {
+      // ✅ Ambil dari auth beneran
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data } = await supabase
+          .from("users")
+          .select("xp")
+          .eq("id", user.id)
+          .single();
+
+        setUserXP(data?.xp || 0);
+      }
+
+      setLoading(false);
+    };
+
+    fetchXP();
   }, []);
 
   return (
     <div className="h-screen flex flex-col font-lora relative overflow-hidden touch-none">
-
-      {/* LAYER BACKGROUND */}
       <div
         className="absolute inset-0 blur-[3px]"
         style={{
@@ -25,11 +40,7 @@ const Peta = () => {
           backgroundRepeat: "no-repeat",
         }}
       />
-
-      {/* LAYER OVERLAY */}
       <div className="absolute inset-0 bg-black/20" />
-
-      {/* LAYER PETA */}
       <div className="relative w-full flex-1 flex items-center justify-center overflow-hidden">
         {loading ? (
           <div className="flex flex-col items-center gap-4">
@@ -37,10 +48,9 @@ const Peta = () => {
             <p className="text-white font-semibold font-lora">Memuat Peta...</p>
           </div>
         ) : (
-          <PetaNusantara userXP={userXP} />
+          <PetaNusantara userXP={userXP} />  // ✅ XP real dikirim ke semua pulau
         )}
       </div>
-
     </div>
   );
 };
