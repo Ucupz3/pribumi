@@ -1,25 +1,32 @@
-// =============================================
-// MOCK API — Ganti dengan URL Elysia.js nanti
-// =============================================
+import { supabase } from "../lib/supabase";
 
-const delay = (ms) => new Promise(res => setTimeout(res, ms));
+// ambil semua marker berdasarkan pulau
+export async function getMarkersByIsland(island) {
+  const { data, error } = await supabase
+    .from("markers")
+    .select("*")
+    .eq("island", island);
 
-// Mock user XP — nanti dari auth/session
-const mockUser = {
-  id: "user-123",
-  xp: 80,
-};
+  if (error) {
+    console.error("Error getMarkers:", error);
+    return [];
+  }
 
-/**
- * Ambil XP user untuk keperluan unlock marker
- *
- * ENDPOINT yang harus dibuat backend:
- * GET /user/xp
- *
- * RESPONSE:
- * { xp: number }
- */
+  return data;
+}
+
+// ambil XP user (sementara dummy / nanti sambung auth)
 export async function getUserXP() {
-  await delay(300);
-  return { xp: mockUser.xp };
+  // sementara hardcode dulu biar jalan
+  return { xp: 120 };
+
+  // nanti kalau udah ada auth:
+  /*
+  const { data } = await supabase
+    .from("users")
+    .select("xp")
+    .single();
+
+  return { xp: data.xp };
+  */
 }
