@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react";
 
+// ── Konstanta ────────────────────────────────────────────────
 const BASE_URL = "https://nusa-api.vercel.app";
 
+// XP yang dibutuhkan per level (sesuaikan dengan fungsi calculateLevel di backend)
+// Rumus umum: level N butuh N * 500 XP (sesuaikan jika berbeda)
 const getXpForLevel = (level) => level * 500;
 
+// ── API Helper ───────────────────────────────────────────────
 const apiFetch = async (path, options = {}) => {
+  // Ambil access_token dari localStorage
   const token = localStorage.getItem("access_token");
 
   const res = await fetch(`${BASE_URL}${path}`, {
@@ -247,6 +252,22 @@ export default function Beranda() {
           correctOptionId: res.data.correctOptionId,
         });
         setQuizSudahJawab(true);
+
+        // Update XP user di state langsung tanpa re-fetch
+        setData((prev) => {
+          const newXp = prev.user.xp + res.data.xpGained;
+          const newLevel = Math.floor(newXp / 500); // sesuaikan dengan calculateLevel backend
+          const newXpMax = getXpForLevel(newLevel + 1);
+          return {
+            ...prev,
+            user: {
+              ...prev.user,
+              xp: newXp,
+              level: newLevel,
+              xpMax: newXpMax,
+            },
+          };
+        });
       } else if (res.message?.includes("sudah menjawab")) {
         // Edge case: sudah dijawab (race condition)
         setQuizSudahJawab(true);
@@ -272,6 +293,22 @@ export default function Beranda() {
         setTasks((prev) =>
           prev.map((t) => (t.id === taskId ? { ...t, sudahClaim: true } : t)),
         );
+
+        // Update XP user di state langsung tanpa re-fetch
+        setData((prev) => {
+          const newXp = res.data.newTotalXp;
+          const newLevel = Math.floor(newXp / 500); // sesuaikan dengan calculateLevel backend
+          const newXpMax = getXpForLevel(newLevel + 1);
+          return {
+            ...prev,
+            user: {
+              ...prev.user,
+              xp: newXp,
+              level: newLevel,
+              xpMax: newXpMax,
+            },
+          };
+        });
       }
     } catch {
       // Silent fail — bisa ditambahkan toast notification
