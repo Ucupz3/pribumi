@@ -137,7 +137,7 @@ export default function QuestPage() {
         const { data: userData } = await supabase
           .from("users")
           .select("xp")
-          .eq("id", user.id)
+          .eq("email", user.email)
           .single();
 
         const xpBaru = (userData?.xp || 0) + xpDidapat;
@@ -145,7 +145,7 @@ export default function QuestPage() {
         await supabase
           .from("users")
           .update({ xp: xpBaru })
-          .eq("id", user.id);
+          .eq("email", user.email)
       }
 
       setHasil({ xpDidapat });
