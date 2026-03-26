@@ -15,7 +15,7 @@ export async function getLeaderboard() {
     // const BASE_URL = "http://localhost:3000";
 
     // Ambil token jika endpoint butuh autentikasi (sesuaikan key storage token kamu)
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("access_token");
 
     const response = await fetch(`${BASE_URL}/leaderboard`, {
       method: "GET",
