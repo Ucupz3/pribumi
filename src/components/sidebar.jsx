@@ -190,7 +190,7 @@ export default function Sidebar() {
           {/* Tombol logout di bottom navbar */}
           <button
             onClick={handleLogout}
-            className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-300 font-lora text-xs font-medium text-[#8b3a3a]"
+            className="hidden lg:flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-300 font-lora text-xs font-medium text-[#8b3a3a]"
           >
             <div className="p-1.5 rounded-xl">
               <IconLogout />

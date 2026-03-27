@@ -240,6 +240,14 @@ const Akun = () => {
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
 
+  const handleLogout = () => {
+    // Hapus token dari localStorage
+    localStorage.removeItem("access_token");
+
+    // Redirect ke halaman login
+    window.location.href = "/login"; // kalau pakai react-router: navigate("/login")
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (!token) {
@@ -499,6 +507,28 @@ const Akun = () => {
               />
             </svg>
             Bantuan
+          </button>
+          {/* Tombol Logout versi mobile */}
+          <button
+            onClick={handleLogout}
+            className="w-full flex-1 flex items-center justify-center gap-3 px-6 py-4 border-2 border-[#a69076] rounded-lg shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 text-[#8b3a3a] font-semibold tracking-wide lg:hidden"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width={24}
+              height={24}
+              viewBox="0 0 24 24"
+            >
+              <path
+                fill="none"
+                stroke="#8b3a3a"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M16 17l5-5-5-5M21 12H9M13 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"
+              />
+            </svg>
+            Keluar
           </button>
         </div>
       </div>
