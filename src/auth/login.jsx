@@ -247,7 +247,10 @@ export default function Login() {
 
           {/* Social login */}
           <div className="flex gap-3">
-            <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-[#c9b896] rounded-xl hover:border-[#BD9B2C] hover:shadow-md transition-all duration-200">
+            <button
+              disabled
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-[#c9b896] rounded-xl transition-all duration-200 cursor-not-allowed"
+            >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"

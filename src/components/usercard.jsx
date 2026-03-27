@@ -31,8 +31,8 @@ export default function UserCard() {
         setUser({
           nama: u.username,
           avatar: u.avatarUrl ?? null,
-          xp: u.totalXp, // Menggunakan totalXp dari database
-          xpMax: getXpForLevel(u.level), // Hitung batas XP berdasarkan level saat ini
+          xp: u.totalXp, 
+          xpMax: getXpForLevel(u.level),
           level: u.level
         });
       }
@@ -42,15 +42,19 @@ export default function UserCard() {
   };
 
   useEffect(() => {
-    // Jalankan fetch pertama kali
+    // 1. Ambil data saat pertama kali komponen muncul
     fetchUserData();
 
-    // Listener agar sinkron saat Beranda update XP (handleJawabQuiz/handleClaim)
+    // 2. Listener: Jika ada komponen lain (Beranda) yang kirim sinyal "updateXP"
+    // maka UserCard akan otomatis ambil data terbaru dari API
     const handleUpdate = () => {
+      console.log("⚡ UserCard: Mendeteksi perubahan XP, menyinkronkan...");
       fetchUserData();
     };
 
     window.addEventListener("updateXP", handleUpdate);
+    
+    // Bersihkan listener saat komponen hilang
     return () => window.removeEventListener("updateXP", handleUpdate);
   }, []);
 
@@ -59,7 +63,7 @@ export default function UserCard() {
   const percentage = Math.min((user.xp / user.xpMax) * 100, 100);
 
   return (
-    <div className="fixed font-lora flex items-center">
+    <div className="fixed font-lora flex items-center z-50">
       {/* Avatar - Style Asli Kamu */}
       <div className="absolute -left-7 sm:-left-9 lg:-left-12">
         <div
@@ -78,7 +82,8 @@ export default function UserCard() {
               className="w-full h-full object-cover"
               onError={(e) => {
                 e.currentTarget.style.display = "none";
-                e.currentTarget.nextSibling.style.display = "flex";
+                const placeholder = e.currentTarget.nextSibling;
+                if (placeholder) placeholder.style.display = "flex";
               }}
             />
           ) : null}
@@ -133,14 +138,14 @@ export default function UserCard() {
             "
           >
             <div
-              className="h-full bg-gradient-to-r from-red-800 to-orange-500 transition-all duration-700"
+              className="h-full bg-gradient-to-r from-red-800 to-orange-500 transition-all duration-1000 ease-out"
               style={{ width: `${percentage}%` }}
             />
           </div>
         </div>
-        {/* Menampilkan level kecil di bawah bar agar user tahu progressnya */}
+        {/* Level Indicator */}
         <div className="text-[10px] text-right font-bold text-[#a08060] -mt-1 opacity-70">
-           Lv.{user.level}
+            Lv.{user.level}
         </div>
       </div>
     </div>

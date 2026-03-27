@@ -15,6 +15,24 @@ const bgStyle = {
   backgroundRepeat: "no-repeat",
 };
 
+// ================== EMAIL CONFIG ==================
+const email = "support@nusantaraquest.com"; // ganti email tujuan
+
+const subject = encodeURIComponent("Pertanyaan tentang Nusantara Quest");
+
+const body = encodeURIComponent(
+`Halo, selamat siang 👋
+
+Saya ingin bertanya tentang Nusantara Quest.
+
+- Cara bermainnya bagaimana ya?
+- Saya mengalami kendala di aplikasi.
+
+Terima kasih 🙏`
+);
+
+const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
+// ==================================================
 // ── Helper XP ─────────────────────────────────────────────────
 // Sesuaikan dengan fungsi calculateLevel di backend
 const getXpForLevel = (level) => level * 500;
@@ -89,21 +107,25 @@ function EditPopup({ user, onClose, onSave }) {
     }
   };
 
-  return (
+return (
     <>
+      {/* Overlay tetap sama */}
       <div
         className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
+      
+      {/* MODAL CONTAINER: Perhatikan perubahan pada class w-[92%] dan max-w-md */}
       <div
-        className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border-2 border-[#c9b896] font-lora"
+        className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md rounded-2xl overflow-hidden shadow-2xl border-2 border-[#c9b896] font-lora"
         style={bgStyle}
       >
-        <div className="px-6 py-4 border-b-2 border-[#c9b896] flex items-center justify-between">
+        {/* HEADER: Dibuat sedikit lebih ramping di mobile */}
+        <div className="px-5 py-3.5 sm:px-6 sm:py-4 border-b-2 border-[#c9b896] flex items-center justify-between">
           <p className="text-[#5c4033] font-black text-lg">Edit Profil</p>
           <button
             onClick={onClose}
-            className="text-[#a08060] hover:text-[#5c4033] transition-colors"
+            className="text-[#a08060] hover:text-[#5c4033] transition-colors p-1"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -120,9 +142,11 @@ function EditPopup({ user, onClose, onSave }) {
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-5">
+        {/* CONTENT BODY */}
+        <div className="px-5 py-5 sm:px-6 sm:py-6 space-y-5">
+          {/* AVATAR PREVIEW */}
           <div className="flex justify-center">
-            <div className="w-24 h-24 rounded-full border-4 border-[#BD9B2C] overflow-hidden shadow-lg">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-[#BD9B2C] overflow-hidden shadow-lg bg-[#e8dcc0]">
               <img
                 src={avatar}
                 alt="preview"
@@ -131,11 +155,12 @@ function EditPopup({ user, onClose, onSave }) {
             </div>
           </div>
 
+          {/* PILIH AVATAR: Grid diperbaiki agar lebih fleksibel */}
           <div>
             <p className="text-[#5c4033] text-sm font-bold mb-3">
               Pilih Avatar
             </p>
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
               {AVATAR_OPTIONS.map((av) => (
                 <button
                   key={av}
@@ -144,8 +169,8 @@ function EditPopup({ user, onClose, onSave }) {
                     w-full aspect-square rounded-full overflow-hidden border-2 transition-all duration-200
                     ${
                       avatar === av
-                        ? "border-[#BD9B2C] ring-2 ring-[#BD9B2C] ring-offset-1 scale-110"
-                        : "border-[#c9b896] hover:border-[#BD9B2C] hover:scale-105 opacity-70 hover:opacity-100"
+                        ? "border-[#BD9B2C] ring-2 ring-[#BD9B2C] ring-offset-1 scale-105"
+                        : "border-[#c9b896] hover:border-[#BD9B2C] opacity-70 hover:opacity-100"
                     }
                   `}
                 >
@@ -162,6 +187,7 @@ function EditPopup({ user, onClose, onSave }) {
             </div>
           </div>
 
+          {/* INPUT NAMA */}
           <div>
             <p className="text-[#5c4033] text-sm font-bold mb-2">Nama</p>
             <input
@@ -172,7 +198,7 @@ function EditPopup({ user, onClose, onSave }) {
               placeholder="Masukkan nama..."
               style={bgStyle}
               className={`
-                w-full px-4 py-3 rounded-xl border-2 text-sm font-lora outline-none
+                w-full px-4 py-2.5 sm:py-3 rounded-xl border-2 text-sm font-lora outline-none
                 text-[#5c4033] placeholder-[#b8a88a] transition-all duration-200
                 ${
                   namaError
@@ -183,13 +209,11 @@ function EditPopup({ user, onClose, onSave }) {
                 }
               `}
             />
-            <div className="flex justify-between mt-1.5">
-              <p
-                className={`text-xs ${namaError ? "text-red-500 font-semibold" : "text-transparent"}`}
-              >
+            <div className="flex justify-between mt-1.5 px-1">
+              <p className={`text-[10px] sm:text-xs ${namaError ? "text-red-500 font-semibold" : "text-transparent"}`}>
                 {namaError || "ok"}
               </p>
-              <p className="text-[#a08060] text-xs">{nama.length}/50</p>
+              <p className="text-[#a08060] text-[10px] sm:text-xs">{nama.length}/50</p>
             </div>
           </div>
 
@@ -199,11 +223,12 @@ function EditPopup({ user, onClose, onSave }) {
             </p>
           )}
 
+          {/* ACTION BUTTONS */}
           <div className="flex gap-3 pt-1">
             <button
               onClick={onClose}
               style={bgStyle}
-              className="flex-1 border-2 border-[#c9b896] text-[#a08060] font-bold text-sm py-3 rounded-xl hover:border-[#a08060] transition-all duration-200"
+              className="flex-1 border-2 border-[#c9b896] text-[#a08060] font-bold text-sm py-2.5 sm:py-3 rounded-xl hover:border-[#a08060] active:scale-95 transition-all"
             >
               Batal
             </button>
@@ -211,11 +236,11 @@ function EditPopup({ user, onClose, onSave }) {
               onClick={handleSave}
               disabled={!!namaError || !nama.trim() || loading}
               className={`
-                flex-1 font-bold text-sm py-3 rounded-xl
+                flex-1 font-bold text-sm py-2.5 sm:py-3 rounded-xl
                 transition-all duration-200 flex items-center justify-center gap-2
                 ${
                   !namaError && nama.trim() && !loading
-                    ? "border-2 border-[#BD9B2C] text-[#5c4033] hover:bg-[#BD9B2C]/10 hover:-translate-y-0.5"
+                    ? "border-2 border-[#BD9B2C] text-[#5c4033] bg-[#BD9B2C]/5 hover:bg-[#BD9B2C]/20 active:scale-95"
                     : "bg-[#e8dcc0] text-[#a08060] cursor-not-allowed border-2 border-[#c9b896]"
                 }
               `}
@@ -487,27 +512,24 @@ const Akun = () => {
             </svg>
             Edit Profile
           </button>
-          <button
-            className="w-full flex-1 flex items-center justify-center gap-3 px-6 py-4 border-2 border-[#a69076] rounded-lg shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 text-[#4E2C12] font-semibold tracking-wide"
-            style={bgStyle}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width={24}
-              height={24}
-              viewBox="0 0 24 24"
-            >
-              <path
-                fill="none"
-                stroke="#4E2C12"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2.9}
-                d="M10.5 10.5h2V18m0 0H15m-2.5 0H10m1.5-11V6h1v1z"
-              />
-            </svg>
-            Bantuan
-          </button>
+          <a href={mailtoLink} target="_blank" rel="noopener noreferrer" className="w-full flex-1">
+              <button
+                className="w-full flex items-center justify-center gap-3 px-6 py-4 border-2 border-[#a69076] rounded-lg shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 text-[#4E2C12] font-semibold tracking-wide"
+                style={bgStyle}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24">
+                  <path
+                    fill="none"
+                    stroke="#4E2C12"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.9}
+                    d="M10.5 10.5h2V18m0 0H15m-2.5 0H10m1.5-11V6h1v1z"
+                  />
+                </svg>
+                Bantuan
+              </button>
+            </a>
           {/* Tombol Logout versi mobile */}
           <button
             onClick={handleLogout}

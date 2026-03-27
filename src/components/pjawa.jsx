@@ -17,24 +17,41 @@ function LockIcon({ size = 28 }) {
   );
 }
 
-export default function Jawa({ onMarkerClick, userXP = 0 }) {
-
+export default function Jawa({ onMarkerClick }) {
   const [markers, setMarkers] = useState([]);
+  const [realXP, setRealXP] = useState(0);
 
   useEffect(() => {
-    const fetchMarkers = async () => {
+    const getData = async () => {
+      // 1. Ambil token & Sinkronisasi XP dari API
+      const token = localStorage.getItem("access_token");
+
+      if (!token) {
+        console.log("❌ Belum login");
+        return;
+      }
+
+      try {
+        const res = await fetch("https://nusa-api.vercel.app/auth/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const json = await res.json();
+        if (json.success) {
+          setRealXP(json.data.totalXp);
+        }
+      } catch (err) {
+        console.error("Gagal sinkron XP:", err.message);
+      }
+
+      // 2. Ambil marker khusus Jawa (Kolom Spesifik)
       const { data, error } = await supabase
         .from("markers")
         .select(`
-          id,
-          name,
-          slug,
-          pos_top,
-          pos_left,
-          xp_reward,
-          total_soal,
-          wilayah,
-          xp_required,
+          id, name, slug, pos_top, pos_left, 
+          xp_reward, total_soal, wilayah, xp_required,
           islands!inner(slug)
         `)
         .eq("islands.slug", "jawa");
@@ -46,16 +63,15 @@ export default function Jawa({ onMarkerClick, userXP = 0 }) {
       }
     };
 
-    fetchMarkers();
+    getData();
   }, []);
 
   const handleClick = (e, marker, unlocked) => {
     e.stopPropagation();
-
     if (!unlocked) return;
 
+    // Gunakan getBoundingClientRect agar posisi pop-up lebih presisi di tengah marker
     const rect = e.currentTarget.getBoundingClientRect();
-
     if (onMarkerClick) {
       onMarkerClick(
         {
@@ -70,68 +86,52 @@ export default function Jawa({ onMarkerClick, userXP = 0 }) {
 
   return (
     <div className="absolute top-[83%] left-[48%] -translate-x-1/2 -translate-y-1/2 z-10">
-
       <div className="relative">
-
-        <img
-          src="/images/Pulau/Jawa.png"
-          alt="Pulau Jawa"
-          className="w-[50%] min-w-[150px] h-auto"
+        <img 
+          src="/images/Pulau/Jawa.png" 
+          alt="Jawa" 
+          className="w-[50%] min-w-[150px] h-auto pointer-events-none select-none" 
         />
 
-        {markers?.map((m) => {
-
-          const unlocked = userXP >= m.xp_required;
+        {markers.map((m) => {
+          const isUnlocked = Number(realXP) >= Number(m.xp_required);
 
           return (
-            <div
-              key={m.id}
-              className="absolute group"
-              style={{
-                top: m.pos_top,
-                left: m.pos_left,
-                transform: "translate(-50%,-50%)"
+            <div 
+              key={m.id} 
+              className="absolute group z-50" 
+              style={{ 
+                top: m.pos_top, 
+                left: m.pos_left, 
+                transform: "translate(-50%,-50%)" 
               }}
             >
-
-              {unlocked ? (
-
-                <div
-                  onClick={(e) => handleClick(e, m, true)}
-                  className="cursor-pointer z-50"
+              {isUnlocked ? (
+                <div 
+                  onClick={(e) => handleClick(e, m, true)} 
+                  className="cursor-pointer"
                 >
-
                   <div className="relative w-4 h-4">
-                    <div className="absolute inset-0 bg-yellow-400 rounded-full animate-ping"></div>
-                    <div className="relative w-4 h-4 bg-yellow-500 rounded-full border-2 border-white"></div>
+                    <div className="absolute inset-0 bg-yellow-400 rounded-full animate-ping opacity-75"></div>
+                    <div className="relative w-4 h-4 bg-yellow-500 rounded-full border-2 border-white shadow-sm"></div>
                   </div>
-
-                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100">
+                  
+                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none">
                     {m.name}
                   </span>
-
                 </div>
-
               ) : (
-
-                <div className="cursor-not-allowed">
-
-                  <LockIcon size={26} />
-
-                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-gray-800 text-yellow-400 text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap inline-block">
-  🔒 {m.xp_required} XP
-</span>
-
+                <div className="cursor-not-allowed flex flex-col items-center">
+                  <LockIcon size={24} />
+                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-gray-800 text-yellow-400 text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none">
+                    🔒 {m.xp_required} XP
+                  </span>
                 </div>
-
               )}
-
             </div>
           );
         })}
-
       </div>
-
     </div>
   );
 }

@@ -17,11 +17,36 @@ function LockIcon({ size = 28 }) {
   );
 }
 
-export default function NusaTenggara({ onMarkerClick, userXP = 0 }) {
+export default function NusaTenggara({ onMarkerClick }) {
   const [markers, setMarkers] = useState([]);
+  const [realXP, setRealXP] = useState(0);
 
   useEffect(() => {
-    const fetchMarkers = async () => {
+    const getData = async () => {
+      // 1. Ambil token & Sinkronisasi XP dari API (Sesuai gaya Jawa)
+      const token = localStorage.getItem("access_token");
+
+      if (!token) {
+        console.log("❌ Belum login");
+        return;
+      }
+
+      try {
+        const res = await fetch("https://nusa-api.vercel.app/auth/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const json = await res.json();
+        if (json.success) {
+          setRealXP(json.data.totalXp);
+        }
+      } catch (err) {
+        console.error("Gagal sinkron XP:", err.message);
+      }
+
+      // 2. Ambil marker khusus Bali - Nusa Tenggara (Gaya Query Konsisten)
       const { data, error } = await supabase
         .from("markers")
         .select(`
@@ -36,7 +61,7 @@ export default function NusaTenggara({ onMarkerClick, userXP = 0 }) {
           xp_required,
           islands!inner(slug)
         `)
-        .eq("islands.slug", "bali-nusa-tenggara"); // 🔥 penting
+        .eq("islands.slug", "bali-nusa-tenggara"); // 🔥 Slug tetap dipertahankan
 
       if (error) {
         console.error("Gagal ambil marker:", error.message);
@@ -45,16 +70,14 @@ export default function NusaTenggara({ onMarkerClick, userXP = 0 }) {
       }
     };
 
-    fetchMarkers();
+    getData();
   }, []);
 
   const handleClick = (e, marker, unlocked) => {
     e.stopPropagation();
-
     if (!unlocked) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
-
     if (onMarkerClick) {
       onMarkerClick(
         {
@@ -70,15 +93,15 @@ export default function NusaTenggara({ onMarkerClick, userXP = 0 }) {
   return (
     <div className="absolute top-[90%] left-[66%] -translate-x-1/2 -translate-y-1/2 z-10">
       <div className="relative">
-
         <img
           src="/images/Pulau/NT.png"
           alt="Pulau Nusa Tenggara"
-          className="w-[74%] min-w-[140px] h-auto"
+          className="w-[74%] min-w-[140px] h-auto pointer-events-none"
         />
 
         {markers?.map((m) => {
-          const unlocked = userXP >= m.xp_required;
+          // Logika Unlock sinkron dengan realXP
+          const isUnlocked = Number(realXP) >= Number(m.xp_required);
 
           return (
             <div
@@ -90,8 +113,7 @@ export default function NusaTenggara({ onMarkerClick, userXP = 0 }) {
                 transform: "translate(-50%,-50%)"
               }}
             >
-
-              {unlocked ? (
+              {isUnlocked ? (
                 <div
                   onClick={(e) => handleClick(e, m, true)}
                   className="cursor-pointer z-50"
@@ -101,24 +123,21 @@ export default function NusaTenggara({ onMarkerClick, userXP = 0 }) {
                     <div className="relative w-4 h-4 bg-yellow-500 rounded-full border-2 border-white"></div>
                   </div>
 
-                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100">
+                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">
                     {m.name}
                   </span>
                 </div>
               ) : (
-                <div className="cursor-not-allowed">
+                <div className="cursor-not-allowed flex flex-col items-center">
                   <LockIcon size={26} />
-
                   <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-gray-800 text-yellow-400 text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap inline-block">
                     🔒 {m.xp_required} XP
                   </span>
                 </div>
               )}
-
             </div>
           );
         })}
-
       </div>
     </div>
   );

@@ -412,18 +412,20 @@ export default function Beranda() {
           <div className="flex flex-col gap-4 overflow-hidden">
             {/* Quiz Harian */}
             <div
-              className="border-2 border-[#c9b896] rounded-2xl overflow-hidden shadow-md relative flex-shrink-0"
+              className="border-2 border-[#c9b896] rounded-2xl overflow-hidden shadow-md flex flex-col"
               style={bgPaper}
             >
-              <div className="px-5 py-3 border-b-2 border-[#c9b896] flex items-center justify-between relative z-10">
+              {/* HEADER */}
+              <div className="flex items-center justify-between px-5 lg:py-6 py-3 border-b-2 border-[#c9b896]">
                 <div>
                   <p className="text-[#5c4033] font-black text-base">
                     Quiz Harian ⚡
                   </p>
                   <p className="text-[#a08060] text-xs">
-                    +{quizHarian.xpReward} XP · Ganti tiap hari
+                    +{quizHarian.xpReward} XP · Update tiap hari
                   </p>
                 </div>
+
                 {quizSudahJawab && (
                   <span className="bg-[#4a7c59]/20 text-[#4a7c59] text-[10px] font-bold px-2.5 py-1 rounded-full border border-[#4a7c59]/30">
                     ✅ Selesai
@@ -431,12 +433,14 @@ export default function Beranda() {
                 )}
               </div>
 
-              <div className="px-5 py-3 space-y-3 relative">
+              {/* CONTENT */}
+              <div className="px-5 py-6 space-y-2 relative">
                 <p className="text-[#5c4033] font-semibold text-sm leading-snug">
                   {quizHarian.pertanyaan}
                 </p>
 
-                <div className="grid grid-cols-2 gap-2">
+                {/* OPTIONS */}
+                <div className="grid grid-cols-2 gap-3">
                   {quizHarian.options.map((opt, i) => {
                     const huruf = ["A", "B", "C", "D"][i];
                     const isSelected = quizSelectedOptionId === opt.id;
@@ -465,7 +469,7 @@ export default function Beranda() {
                         onClick={() => handleJawabQuiz(opt.id)}
                         disabled={quizSudahJawab || quizSubmitting}
                         style={!quizSudahJawab ? bgPaper : {}}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 text-xs font-medium transition-all duration-200 ${borderStyle} ${
+                        className={`flex items-start gap-2 px-3 py-2.5 rounded-xl border-2 text-xs font-medium transition-all duration-200 ${borderStyle} ${
                           !quizSudahJawab && !quizSubmitting
                             ? "hover:border-[#BD9B2C] cursor-pointer"
                             : "cursor-default"
@@ -480,6 +484,7 @@ export default function Beranda() {
                             huruf
                           )}
                         </span>
+
                         <span className="text-left leading-tight">
                           {opt.optionText}
                         </span>
@@ -488,45 +493,40 @@ export default function Beranda() {
                   })}
                 </div>
 
-                {/* Overlay selesai */}
-                {quizSudahJawab && (
-                  <div
-                    className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-b-2xl"
-                    style={{
-                      ...bgPaper,
-                      backgroundColor: "rgba(255,255,255,0.88)",
-                      backdropFilter: "blur(4px)",
-                    }}
-                  >
-                    <span className="text-3xl">🎉</span>
-                    <p className="text-[#5c4033] font-black text-sm">
-                      Quiz Selesai!
+                {/* OVERLAY */}
+              {quizSudahJawab && (
+                <div
+                  className="absolute inset-0 flex flex-col items-center justify-center text-center gap-1.5 px-4 rounded-b-2xl"
+                  style={{
+                    ...bgPaper,
+                    backgroundColor: "rgba(255,255,255,0.9)"
+                  }}
+                >
+                  <span className="text-2xl">🎉</span>
+
+                  <p className="text-[#5c4033] font-black text-sm leading-tight">
+                    Quiz Selesai!
+                  </p>
+
+                  <p className="text-[#a08060] text-[11px] leading-tight">
+                    Kembali lagi besok!
+                  </p>
+
+                  {quizResult && (
+                    <p
+                      className={`text-[11px] font-bold ${
+                        quizResult.isCorrect
+                          ? "text-[#4a7c59]"
+                          : "text-[#8b3a3a]"
+                      }`}
+                    >
+                      {quizResult.isCorrect
+                        ? `✅ Benar! +${quizResult.xpGained} XP`
+                        : `❌ Jawaban salah · +${quizResult.xpGained} XP partisipasi`}
                     </p>
-                    <p className="text-[#a08060] text-xs text-center px-4">
-                      Kembali lagi besok!
-                    </p>
-                    {quizResult && (
-                      <>
-                        <p
-                          className={`text-xs font-bold mt-0.5 ${
-                            quizResult.isCorrect
-                              ? "text-[#4a7c59]"
-                              : "text-[#8b3a3a]"
-                          }`}
-                        >
-                          {quizResult.isCorrect
-                            ? `✅ Benar! +${quizResult.xpGained} XP`
-                            : `❌ Jawaban salah · +${quizResult.xpGained} XP partisipasi`}
-                        </p>
-                        {quizHarian.explanation && (
-                          <p className="text-[#a08060] text-[10px] text-center px-6 mt-1 leading-relaxed">
-                            💡 {quizHarian.explanation}
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
+                  )}
+                </div>
+              )}
               </div>
             </div>
 
@@ -541,7 +541,7 @@ export default function Beranda() {
                     Task Mingguan 🎯
                   </p>
                   <p className="text-[#a08060] text-xs">
-                    Ganti tiap 7 hari · Klaim XP-mu!
+                    Mingguan · Klaim XP sekarang!
                   </p>
                 </div>
                 <span className="bg-[#BD9B2C]/20 text-[#81691A] text-[10px] font-bold px-2.5 py-1 rounded-full border border-[#BD9B2C]/40">

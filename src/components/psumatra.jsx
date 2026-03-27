@@ -12,31 +12,56 @@ function LockIcon({ size = 28 }) {
       </g>
       <path fill="#dfe9ef" d="M32 0C19.1 0 8.6 10.6 8.6 23.5c0 .8 1.6 1.4 3.8 1.4v-1.4c.8-11 9.3-19.7 19.6-19.7c10.4 0 18.9 8.7 19.6 19.7v1.4c2.2 0 3.8-.6 3.8-1.4C55.4 10.6 44.9 0 32 0"/>
       <path fill="#b0bdc6" d="M51.6 23.5C50.9 12.6 42.4 3.9 32 3.9s-18.9 8.7-19.6 19.7V25c2.2 0 4.2-.6 4.2-1.4C16.5 16.4 22.5 8 32 8s15.5 8.4 15.5 15.5c0 .8 2 1.4 4.2 1.4z"/>
-      <path fill="#3e4347" d="m36.6 56.4l-1.9-12.3c1.1-.8 1.9-2.2 1.9-3.7c0-2.5-2-4.6-4.6-4.6s-4.6 2.1-4.6 4.6c0 1.5.7 2.9 1.9 3.7l-1.9 12.3z"/>
+      <path fill="#3e4347" d="m36.6 56.4-1.9-12.3c1.1-.8 1.9-2.2 1.9-3.7c0-2.5-2-4.6-4.6-4.6s-4.6 2.1-4.6 4.6c0 1.5.7 2.9 1.9 3.7l-1.9 12.3z"/>
     </svg>
   );
 }
 
-export default function Sumatra({ onMarkerClick, userXP = 0 }) {
+export default function Sumatra({ onMarkerClick }) {
   const [markers, setMarkers] = useState([]);
+  const [realXP, setRealXP] = useState(0);
 
   useEffect(() => {
-    const fetchMarkers = async () => {
+    const getData = async () => {
+      // 1. Ambil token & Sinkronisasi XP dari API
+      const token = localStorage.getItem("access_token");
+
+      if (!token) {
+        console.log("❌ Belum login");
+        return;
+      }
+
+      try {
+        const res = await fetch("https://nusa-api.vercel.app/auth/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const json = await res.json();
+        if (json.success) {
+          setRealXP(json.data.totalXp);
+        }
+      } catch (err) {
+        console.error("Gagal sinkron XP:", err.message);
+      }
+
+      // 2. Ambil marker khusus Sumatra (Gaya Query Konsisten)
       const { data, error } = await supabase
         .from("markers")
         .select(`
-  id,
-  name,
-  slug,
-  pos_top,
-  pos_left,
-  xp_reward,
-  total_soal,
-  wilayah,
-  xp_required,
-  islands!inner(slug)
-`)
-.eq("islands.slug", "sumatra")
+          id,
+          name,
+          slug,
+          pos_top,
+          pos_left,
+          xp_reward,
+          total_soal,
+          wilayah,
+          xp_required,
+          islands!inner(slug)
+        `)
+        .eq("islands.slug", "sumatra"); // Filter slug sumatra
 
       if (error) {
         console.error("Gagal ambil marker:", error.message);
@@ -45,16 +70,14 @@ export default function Sumatra({ onMarkerClick, userXP = 0 }) {
       }
     };
 
-    fetchMarkers();
+    getData();
   }, []);
 
   const handleClick = (e, marker, unlocked) => {
     e.stopPropagation();
-
     if (!unlocked) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
-
     if (onMarkerClick) {
       onMarkerClick(
         {
@@ -70,15 +93,15 @@ export default function Sumatra({ onMarkerClick, userXP = 0 }) {
   return (
     <div className="absolute top-[56%] left-[34%] -translate-x-1/2 -translate-y-1/2 z-10">
       <div className="relative">
-
         <img
           src="/images/Pulau/Sumatra.png"
           alt="Pulau Sumatra"
-          className="w-[38%] min-w-[150px] h-auto"
+          className="w-[38%] min-w-[150px] h-auto pointer-events-none"
         />
 
-        {markers?.map((m) => {
-          const unlocked = userXP >= m.xp_required;
+        {markers.map((m) => {
+          // Logika Unlock sinkron dengan realXP
+          const isUnlocked = Number(realXP) >= Number(m.xp_required);
 
           return (
             <div
@@ -90,8 +113,7 @@ export default function Sumatra({ onMarkerClick, userXP = 0 }) {
                 transform: "translate(-50%,-50%)"
               }}
             >
-
-              {unlocked ? (
+              {isUnlocked ? (
                 <div
                   onClick={(e) => handleClick(e, m, true)}
                   className="cursor-pointer z-50"
@@ -101,14 +123,13 @@ export default function Sumatra({ onMarkerClick, userXP = 0 }) {
                     <div className="relative w-4 h-4 bg-yellow-500 rounded-full border-2 border-white"></div>
                   </div>
 
-                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100">
+                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">
                     {m.name}
                   </span>
                 </div>
               ) : (
-                <div className="cursor-not-allowed">
+                <div className="cursor-not-allowed flex flex-col items-center">
                   <LockIcon size={26} />
-
                   <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-gray-800 text-yellow-400 text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap inline-block">
                     🔒 {m.xp_required} XP
                   </span>
@@ -117,7 +138,6 @@ export default function Sumatra({ onMarkerClick, userXP = 0 }) {
             </div>
           );
         })}
-
       </div>
     </div>
   );
