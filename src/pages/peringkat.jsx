@@ -9,9 +9,24 @@ const bgStyle = {
 };
 
 const medalColor = {
-  0: { border: "border-yellow-500", text: "text-yellow-600", label: "#1", size: "w-28 h-28" },
-  1: { border: "border-gray-400", text: "text-gray-500", label: "#2", size: "w-20 h-20" },
-  2: { border: "border-orange-500", text: "text-orange-500", label: "#3", size: "w-20 h-20" },
+  0: {
+    border: "border-yellow-500",
+    text: "text-yellow-600",
+    label: "#1",
+    size: "w-28 h-28",
+  },
+  1: {
+    border: "border-gray-400",
+    text: "text-gray-500",
+    label: "#2",
+    size: "w-20 h-20",
+  },
+  2: {
+    border: "border-orange-500",
+    text: "text-orange-500",
+    label: "#3",
+    size: "w-20 h-20",
+  },
 };
 
 const podiumOrder = [1, 0, 2];
@@ -21,25 +36,50 @@ const Peringkat = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-useEffect(() => {
-  console.log("Peringkat mounted");
-  const fetchData = async () => {
-    console.log("Fetching leaderboard...");
-    const data = await getLeaderboard();
-    console.log("Leaderboard data:", data);
-    setPlayers(data);
-    setLoading(false);
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      // FIX 1: Bungkus dengan try/catch agar error tidak menyebabkan blank screen
+      try {
+        const result = await getLeaderboard();
 
-  fetchData();
-}, []);
+        // FIX 2: Pastikan yang di-set ke state adalah array
+        // Tangani berbagai kemungkinan shape response:
+        // - Array langsung           : [{ ... }, { ... }]
+        // - Response wrapper         : { data: [...] }
+        // - Response wrapper nested  : { success: true, data: { ... } }
+        let list = [];
+        if (Array.isArray(result)) {
+          list = result;
+        } else if (Array.isArray(result?.data)) {
+          list = result.data;
+        } else {
+          // Jika shape tidak dikenali, log untuk debugging
+          console.warn("Unexpected leaderboard response shape:", result);
+        }
+
+        setPlayers(list);
+      } catch (err) {
+        // FIX 3: Tangkap error dan tampilkan pesan, bukan blank screen
+        console.error("Gagal memuat leaderboard:", err);
+        setError("Gagal memuat data peringkat. Silakan coba lagi.");
+      } finally {
+        // FIX 4: Gunakan finally agar loading selalu dimatikan
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const topThree = players.slice(0, 3);
   const others = players.slice(3);
 
   if (loading) {
     return (
-      <div className="w-full min-h-screen flex flex-col items-center justify-center gap-4 font-lora" style={bgStyle}>
+      <div
+        className="w-full min-h-screen flex flex-col items-center justify-center gap-4 font-lora"
+        style={bgStyle}
+      >
         <div className="w-10 h-10 border-4 border-[#BD9B2C] border-t-transparent rounded-full animate-spin" />
         <p className="text-[#5c3b1e] font-semibold">Memuat Peringkat...</p>
       </div>
@@ -48,14 +88,34 @@ useEffect(() => {
 
   if (error) {
     return (
-      <div className="w-full min-h-screen flex items-center justify-center font-lora" style={bgStyle}>
+      <div
+        className="w-full min-h-screen flex items-center justify-center font-lora"
+        style={bgStyle}
+      >
         <p className="text-red-500 font-semibold">{error}</p>
       </div>
     );
   }
 
+  // FIX 5: Tangani state kosong setelah loading selesai
+  if (players.length === 0) {
+    return (
+      <div
+        className="w-full min-h-screen flex items-center justify-center font-lora"
+        style={bgStyle}
+      >
+        <p className="text-[#a08060] font-semibold">
+          Belum ada data peringkat.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full min-h-screen p-6 pt-28 xl:pt-6 font-lora" style={bgStyle}>
+    <div
+      className="w-full min-h-screen p-6 pt-28 xl:pt-6 font-lora"
+      style={bgStyle}
+    >
       <h1 className="text-3xl font-bold text-center text-[#5c3b1e] mb-10">
         Leaderboard
       </h1>
@@ -70,28 +130,44 @@ useEffect(() => {
           const isFirst = i === 0;
 
           return (
-            <div key={i} className={`flex flex-col items-center ${isFirst ? "scale-110" : ""}`}>
+            <div
+              key={i}
+              className={`flex flex-col items-center ${isFirst ? "scale-110" : ""}`}
+            >
               {isFirst && <span className="text-2xl mb-1">👑</span>}
 
-              <div className={`${medal.size} rounded-full border-4 ${medal.border} overflow-hidden bg-[#e8dcc0]`}>
+              <div
+                className={`${medal.size} rounded-full border-4 ${medal.border} overflow-hidden bg-[#e8dcc0]`}
+              >
                 {player.avatar ? (
                   <img
                     src={player.avatar}
-                    alt={player.name}
+                    alt={player.username}
                     className="w-full h-full object-cover"
+                    // FIX 6: Fallback avatar jika gambar gagal load
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      e.currentTarget.nextSibling.style.display = "flex";
+                    }}
                   />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[#a08060] font-black text-xl">
-                    {player.name?.charAt(0) || "?"}
-                  </div>
-                )}
+                ) : null}
+                <div
+                  className="w-full h-full items-center justify-center text-[#a08060] font-black text-xl"
+                  style={{ display: player.avatar ? "none" : "flex" }}
+                >
+                  {player.name?.charAt(0)?.toUpperCase() || "?"}
+                </div>
               </div>
 
               <p className={`mt-2 font-black text-base ${medal.text}`}>
                 {medal.label}
               </p>
 
-              <p className={`font-semibold text-sm text-[#5c3b1e] ${isFirst ? "text-base" : ""}`}>
+              <p
+                className={`font-semibold text-sm text-[#5c3b1e] ${
+                  isFirst ? "text-base" : ""
+                }`}
+              >
                 {player.name || "Unknown"}
               </p>
 
@@ -126,12 +202,18 @@ useEffect(() => {
                       src={player.avatar}
                       alt={player.name}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        e.currentTarget.nextSibling.style.display = "inline";
+                      }}
                     />
-                  ) : (
-                    <span className="text-[#a08060] font-black text-sm">
-                      {player.name?.charAt(0) || "?"}
-                    </span>
-                  )}
+                  ) : null}
+                  <span
+                    className="text-[#a08060] font-black text-sm"
+                    style={{ display: player.avatar ? "none" : "inline" }}
+                  >
+                    {player.name?.charAt(0)?.toUpperCase() || "?"}
+                  </span>
                 </div>
 
                 <span className="text-[#5c3b1e] font-semibold text-sm">

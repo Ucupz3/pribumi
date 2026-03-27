@@ -18,26 +18,22 @@ export default function Login() {
       const res = await fetch("https://nusa-api.vercel.app/auth/login", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json", // ✅ Fix 1: header wajib ada
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json(); // ✅ Fix 2: parse response
+      const data = await res.json();
 
       if (!res.ok || !data.success) {
-        // ✅ Fix 3: tangkap error dari backend (401, dll)
         setError(data.message ?? "Email atau password salah");
         return;
       }
-
-      // ✅ Fix 4: simpan token dari struktur { success, message, data: { user, access_token, refresh_token } }
       localStorage.setItem("access_token", data.data.access_token);
       localStorage.setItem("refresh_token", data.data.refresh_token);
 
       navigate("/");
     } catch (err) {
-      // ✅ Fix 5: tangkap error jaringan (server mati, timeout, dll)
       setError("Tidak dapat terhubung ke server. Periksa koneksi Anda.");
     } finally {
       setLoading(false);
