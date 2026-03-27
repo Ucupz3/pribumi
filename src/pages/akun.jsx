@@ -16,7 +16,7 @@ const bgStyle = {
 };
 
 // ================== EMAIL CONFIG ==================
-const email = "yusufrickyhartonoz3"; // ganti email tujuan
+const email = "yusufrickyhartonoz3@gmail.com"; // ganti email tujuan
 
 const subject = encodeURIComponent("Pertanyaan tentang Nusantara Quest");
 
