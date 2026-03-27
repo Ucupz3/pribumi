@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { startSession, submitSession } from "../api/petaApi";
 
 const bgPage = {
   backgroundImage: "url('/images/bgpetafix.png')",
@@ -16,212 +16,426 @@ const bgPaper = {
   backgroundRepeat: "no-repeat",
 };
 
-export default function QuestPage() {
-  const { slug: id } = useParams(); // ✅ pakai id
-  const navigate = useNavigate();
-
-  const [quest, setQuest] = useState(null);
-  const [loadingQuest, setLoadingQuest] = useState(true);
-  const [index, setIndex] = useState(0);
-  const [jawaban, setJawaban] = useState(null);
-  const [sudahJawab, setSudahJawab] = useState(false);
-  const [skorBenar, setSkorBenar] = useState(0);
-  const [selesai, setSelesai] = useState(false);
-  const [hasil, setHasil] = useState(null);
-
-  useEffect(() => {
-    const fetchQuest = async () => {
-      const { data, error } = await supabase
-        .from("markers")
-        .select(`
-          id,
-          name,
-          xp_reward,
-          quizzes (
-            id,
-            question,
-            quiz_options (
-              id,
-              option_text,
-              is_correct
-            )
-          )
-        `)
-        .eq("id", id)
-        .single();
-
-      console.log("ID:", id);
-      console.log("DATA:", data);
-      console.log("ERROR:", error);
-
-      if (error) {
-        console.error("ERROR:", error);
-        setLoadingQuest(false);
-        return;
-      }
-
-      const soalFormatted = (data.quizzes || []).map((q) => ({
-        pertanyaan: q.question,
-        pilihan: q.quiz_options.map((opt) => opt.option_text),
-        jawaban: q.quiz_options.find((opt) => opt.is_correct)?.option_text,
-      }));
-
-      setQuest({
-        nama: data.name,
-        xpReward: data.xp_reward,
-        soal: soalFormatted,
-      });
-
-      setLoadingQuest(false);
-    };
-
-    fetchQuest();
-  }, [id]); // ✅ FIX disini
-
-  // ===============================
-  // LOADING
-  // ===============================
-  if (loadingQuest) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 font-lora px-4" style={bgPage}>
-        <div className="w-12 h-12 border-4 border-[#BD9B2C] border-t-transparent rounded-full animate-spin" />
-        <p className="text-[#5c4033] font-bold">Memuat Gulungan Quest...</p>
-      </div>
-    );
+// ── Shuffle array (Fisher-Yates) ─────────────────────────────
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
   }
+  return a;
+}
 
-  // ===============================
-  // DATA TIDAK ADA
-  // ===============================
-  if (!quest || quest.soal.length === 0) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center font-lora px-4" style={bgPage}>
-        <div className="p-6 rounded-2xl shadow-2xl text-center bg-white/80 border-2 border-[#BD9B2C]">
-          <h2 className="text-xl font-bold text-red-800 mb-2">
-            Soal Belum Tersedia ❗
+// ── Layar Loading ────────────────────────────────────────────
+function LoadingScreen() {
+  return (
+    <div
+      className="min-h-screen flex flex-col items-center justify-center gap-4 font-lora px-4"
+      style={bgPage}
+    >
+      <div className="w-12 h-12 border-4 border-[#BD9B2C] border-t-transparent rounded-full animate-spin" />
+      <p className="text-[#5c4033] font-bold">Memuat Gulungan Quest...</p>
+    </div>
+  );
+}
+
+// ── Layar Error ──────────────────────────────────────────────
+function ErrorScreen({ message, onBack }) {
+  return (
+    <div
+      className="min-h-screen flex flex-col items-center justify-center font-lora px-4"
+      style={bgPage}
+    >
+      <div
+        className="p-6 rounded-2xl shadow-2xl text-center border-2 border-[#BD9B2C] max-w-sm w-full"
+        style={bgPaper}
+      >
+        <p className="text-4xl mb-3">❗</p>
+        <h2 className="text-xl font-bold text-red-800 mb-2">
+          {message || "Terjadi Kesalahan"}
+        </h2>
+        <p className="text-[#5c4033] text-sm mb-6">
+          Silakan kembali ke peta dan coba lagi.
+        </p>
+        <button
+          onClick={onBack}
+          className="px-6 py-2 bg-[#BD9B2C] text-white font-bold rounded-lg hover:bg-[#a08020] transition-colors"
+        >
+          ← Kembali ke Peta
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Layar Hasil ──────────────────────────────────────────────
+function HasilScreen({ hasil, markerName, onBack, onUlang }) {
+  const {
+    score,
+    correctAnswers,
+    totalQuestions,
+    xpGained,
+    isPassed,
+    newBadges = [],
+  } = hasil;
+
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center font-lora p-4"
+      style={bgPage}
+    >
+      <div
+        className="p-6 rounded-2xl shadow-2xl border-2 border-[#BD9B2C] w-full max-w-md"
+        style={bgPaper}
+      >
+        {/* Header hasil */}
+        <div className="text-center mb-6">
+          <p className="text-5xl mb-2">{isPassed ? "🏆" : "📜"}</p>
+          <h2 className="text-2xl font-bold text-[#5c4033]">
+            {isPassed ? "Quest Selesai!" : "Belum Berhasil"}
           </h2>
-          <p className="text-[#5c4033] mb-6">
-            Quest ini belum punya soal di database.
-          </p>
+          <p className="text-[#a08060] text-sm mt-1">{markerName}</p>
+        </div>
+
+        {/* Skor */}
+        <div className="bg-[#e8dcc0]/60 border border-[#c9b896] rounded-2xl p-5 mb-5 space-y-3">
+          {/* Progress bar skor */}
+          <div>
+            <div className="flex justify-between text-xs text-[#a08060] mb-1">
+              <span>Skor</span>
+              <span className="font-bold text-[#5c4033]">{score}%</span>
+            </div>
+            <div className="w-full bg-[#d4c9b0] rounded-full h-3 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${
+                  isPassed
+                    ? "bg-gradient-to-r from-[#81691A] to-[#BD9B2C]"
+                    : "bg-gradient-to-r from-red-700 to-red-400"
+                }`}
+                style={{ width: `${score}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Grid statistik */}
+          <div className="grid grid-cols-3 gap-2 pt-1">
+            <div className="text-center">
+              <p className="text-lg font-black text-[#5c4033]">
+                {correctAnswers}
+              </p>
+              <p className="text-[9px] text-[#a08060] font-bold uppercase">
+                Benar
+              </p>
+            </div>
+            <div className="text-center border-x border-[#c9b896]">
+              <p className="text-lg font-black text-[#5c4033]">
+                {totalQuestions - correctAnswers}
+              </p>
+              <p className="text-[9px] text-[#a08060] font-bold uppercase">
+                Salah
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-black text-[#BD9B2C]">+{xpGained}</p>
+              <p className="text-[9px] text-[#a08060] font-bold uppercase">
+                XP
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Badge baru */}
+        {newBadges.length > 0 && (
+          <div className="bg-[#BD9B2C]/10 border border-[#BD9B2C]/30 rounded-xl p-3 mb-5">
+            <p className="text-xs font-bold text-[#BD9B2C] mb-2">
+              🎖️ Badge Baru Terbuka!
+            </p>
+            {newBadges.map((badge, i) => (
+              <p key={i} className="text-xs text-[#5c4033]">
+                • {badge.name || badge}
+              </p>
+            ))}
+          </div>
+        )}
+
+        {/* Info gagal */}
+        {!isPassed && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-5">
+            <p className="text-xs text-red-700 font-semibold">
+              Minimal skor 60% untuk lulus. Kamu mendapat {score}%.
+            </p>
+            <p className="text-xs text-red-500 mt-1">
+              Tetap semangat! Kamu tetap mendapat {xpGained} XP.
+            </p>
+          </div>
+        )}
+
+        {/* Tombol aksi */}
+        <div className="flex gap-3">
           <button
-            onClick={() => navigate("/peta")}
-            className="px-6 py-2 bg-[#BD9B2C] text-white font-bold rounded-lg"
+            onClick={onBack}
+            className="flex-1 border-2 border-[#c9b896] text-[#a08060] font-bold text-sm py-3 rounded-xl hover:border-[#BD9B2C] transition-colors"
+            style={bgPaper}
           >
-            ← Kembali ke Peta
+            ← Peta
+          </button>
+          <button
+            onClick={onUlang}
+            className="flex-1 border-2 border-[#BD9B2C] text-[#5c4033] font-bold text-sm py-3 rounded-xl hover:bg-[#BD9B2C]/10 transition-colors"
+            style={bgPaper}
+          >
+            🔄 Ulangi
           </button>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
-  const soal = quest.soal[index];
-  const totalSoal = quest.soal.length;
-  const progress = ((index + 1) / totalSoal) * 100;
+// ── Komponen Utama ───────────────────────────────────────────
+export default function QuestPage() {
+  const { slug: markerId } = useParams();
+  const navigate = useNavigate();
 
-  const cekJawaban = (pil) => {
-    if (sudahJawab) return;
-    setJawaban(pil);
-    setSudahJawab(true);
-    if (pil === soal.jawaban) {
-      setSkorBenar((s) => s + 1);
+  // State sesi
+  const [sessionId, setSessionId] = useState(null);
+  const [markerName, setMarkerName] = useState("");
+  const [questions, setQuestions] = useState([]); // soal dengan opsi sudah diacak
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // State quiz
+  const [index, setIndex] = useState(0);
+  const [jawaban, setJawaban] = useState(null); // option id yang dipilih
+  const [sudahJawab, setSudahJawab] = useState(false);
+  const [answers, setAnswers] = useState([]); // kumpulan jawaban untuk submit
+
+  // State hasil
+  const [selesai, setSelesai] = useState(false);
+  const [hasil, setHasil] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Timer
+  const startTimeRef = useRef(Date.now());
+
+  // ── Fetch & mulai sesi ─────────────────────────────────────
+  const initSession = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setIndex(0);
+    setJawaban(null);
+    setSudahJawab(false);
+    setAnswers([]);
+    setSelesai(false);
+    setHasil(null);
+    startTimeRef.current = Date.now();
+
+    try {
+      const data = await startSession(markerId);
+      // data = { sessionId, marker, questions: [...], totalQuestions, timeLimitSec }
+
+      setSessionId(data.sessionId);
+      setMarkerName(data.marker?.name ?? "Quest");
+
+      // Acak urutan soal DAN acak urutan opsi tiap soal
+      const shuffledQuestions = shuffleArray(data.questions).map((q) => ({
+        ...q,
+        options: shuffleArray(q.options),
+      }));
+
+      setQuestions(shuffledQuestions);
+    } catch (err) {
+      console.error("startSession error:", err);
+      if (err.message === "MARKER_LOCKED") {
+        setError("Kamu belum memiliki cukup XP untuk membuka quest ini.");
+      } else if (err.message === "NO_QUESTIONS") {
+        setError("Quest ini belum memiliki soal.");
+      } else if (err.message === "SESSION_ACTIVE") {
+        setError("Kamu memiliki sesi aktif yang belum selesai.");
+      } else {
+        setError("Gagal memuat quest. Coba lagi.");
+      }
+    } finally {
+      setLoading(false);
     }
+  }, [markerId]);
+
+  useEffect(() => {
+    initSession();
+  }, [initSession]);
+
+  // ── Pilih jawaban ──────────────────────────────────────────
+  const cekJawaban = (optionId) => {
+    if (sudahJawab) return;
+    setJawaban(optionId);
+    setSudahJawab(true);
   };
 
+  // ── Lanjut ke soal berikutnya atau submit ──────────────────
   const handleNext = async () => {
-    if (index + 1 >= totalSoal) {
-      const xpDidapat = Math.floor((skorBenar / totalSoal) * quest.xpReward);
+    const soal = questions[index];
 
-      const { data: { user } } = await supabase.auth.getUser();
+    // Simpan jawaban soal ini
+    const updatedAnswers = [
+      ...answers,
+      {
+        quiz_id: soal.id,
+        selected_option_id: jawaban ?? undefined,
+      },
+    ];
+    setAnswers(updatedAnswers);
 
-      if (user) {
-        const { data: userData } = await supabase
-          .from("users")
-          .select("xp")
-          .eq("email", user.email)
-          .single();
+    const isLast = index + 1 >= questions.length;
 
-        const xpBaru = (userData?.xp || 0) + xpDidapat;
-
-        await supabase
-          .from("users")
-          .update({ xp: xpBaru })
-          .eq("email", user.email)
-      }
-
-      setHasil({ xpDidapat });
-      setSelesai(true);
-    } else {
+    if (!isLast) {
+      // Lanjut soal berikutnya
       setIndex((i) => i + 1);
       setJawaban(null);
       setSudahJawab(false);
+      return;
+    }
+
+    // Semua soal selesai — submit ke backend
+    setSubmitting(true);
+    try {
+      const timeSpentSec = Math.round(
+        (Date.now() - startTimeRef.current) / 1000,
+      );
+      const result = await submitSession(
+        sessionId,
+        updatedAnswers,
+        timeSpentSec,
+      );
+      setHasil(result);
+      setSelesai(true);
+    } catch (err) {
+      console.error("submitSession error:", err);
+      setError("Gagal mengirim jawaban. Coba lagi.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const getOptionStyle = (pil) => {
-    const base = "block w-full text-left p-3 rounded-xl border-2 ";
+  // ── Render kondisional ─────────────────────────────────────
+  if (loading) return <LoadingScreen />;
+
+  if (error)
+    return <ErrorScreen message={error} onBack={() => navigate("/peta")} />;
+
+  if (selesai && hasil)
+    return (
+      <HasilScreen
+        hasil={hasil}
+        markerName={markerName}
+        onBack={() => navigate("/peta")}
+        onUlang={initSession}
+      />
+    );
+
+  // ── UI Quiz ────────────────────────────────────────────────
+  const soal = questions[index];
+  const totalSoal = questions.length;
+  const progress = ((index + 1) / totalSoal) * 100;
+
+  // Cari teks jawaban benar dari opsi (untuk highlight setelah jawab)
+  const correctOption = soal.options.find(
+    (o) => o.isCorrect, // backend tidak kirim isCorrect, ini akan undefined — lihat keterangan di bawah
+  );
+
+  const getOptionStyle = (opt) => {
+    const base =
+      "w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-semibold transition-all duration-200 ";
 
     if (!sudahJawab) {
-      return base + "border-[#BD9B2C]/40 bg-white/60";
+      return (
+        base +
+        (jawaban === opt.id
+          ? "border-[#BD9B2C] bg-[#BD9B2C]/10 text-[#5c4033]"
+          : "border-[#c9b896] bg-white/60 text-[#5c4033] hover:border-[#BD9B2C] hover:bg-[#BD9B2C]/5")
+      );
     }
-    if (pil === soal.jawaban) {
-      return base + "border-green-600 bg-green-100";
+
+    // Setelah jawab — backend tidak kirim isCorrect di soal (keamanan)
+    // Hanya highlight pilihan user: kuning jika dipilih, abu jika tidak
+    // Jawaban benar akan terungkap di layar hasil (answerBreakdown)
+    if (opt.id === jawaban) {
+      return base + "border-[#BD9B2C] bg-[#BD9B2C]/15 text-[#5c4033]";
     }
-    if (pil === jawaban) {
-      return base + "border-red-500 bg-red-100";
-    }
-    return base + "border-gray-300 bg-gray-50 opacity-60";
+    return base + "border-[#c9b896] bg-white/30 text-[#a08060] opacity-60";
   };
 
-  // ===============================
-  // UI UTAMA (TIDAK DIUBAH)
-  // ===============================
   return (
-    <div className="min-h-screen flex items-center justify-center font-lora p-4" style={bgPage}>
-      <div className="p-5 rounded-2xl shadow-2xl border border-[#BD9B2C]/60 w-full max-w-md" style={bgPaper}>
-        
-        <div className="mb-6">
-          <div className="flex justify-between mb-2">
-            <h2 className="text-[#8b5a2b] font-bold text-xs truncate">{quest.nama}</h2>
-            <p className="text-[#5c4033] font-bold text-xs">
+    <div
+      className="min-h-screen flex items-center justify-center font-lora p-4"
+      style={bgPage}
+    >
+      <div
+        className="p-5 rounded-2xl shadow-2xl border border-[#BD9B2C]/60 w-full max-w-md"
+        style={bgPaper}
+      >
+        {/* Header: nama quest + progress */}
+        <div className="mb-5">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-[#8b5a2b] font-bold text-xs truncate flex-1 mr-2">
+              {markerName}
+            </h2>
+            <p className="text-[#5c4033] font-bold text-xs whitespace-nowrap">
               {index + 1} / {totalSoal}
             </p>
           </div>
-
-          <div className="w-full bg-[#e6d5b8] h-2 rounded-full">
+          <div className="w-full bg-[#e6d5b8] h-2.5 rounded-full overflow-hidden">
             <div
-              className="bg-[#BD9B2C] h-2 rounded-full"
+              className="bg-gradient-to-r from-[#81691A] to-[#BD9B2C] h-full rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
 
-        <div className="mb-6 bg-white/40 p-4 rounded-xl">
-          <p className="font-bold text-[#4a332a]">
-            {soal.pertanyaan}
+        {/* Pertanyaan */}
+        <div className="mb-5 bg-white/40 border border-[#c9b896] p-4 rounded-xl min-h-[80px] flex items-center">
+          <p className="font-bold text-[#4a332a] leading-relaxed text-sm">
+            {soal.question}
           </p>
         </div>
 
-        <div className="space-y-3 mb-6">
-          {soal.pilihan.map((pil, i) => (
+        {/* Opsi jawaban (sudah diacak) */}
+        <div className="space-y-2.5 mb-5">
+          {soal.options.map((opt) => (
             <button
-              key={i}
-              onClick={() => cekJawaban(pil)}
+              key={opt.id}
+              onClick={() => cekJawaban(opt.id)}
               disabled={sudahJawab}
-              className={getOptionStyle(pil)}
+              className={getOptionStyle(opt)}
             >
-              {pil}
+              {opt.optionText}
             </button>
           ))}
         </div>
 
+        {/* Tombol lanjut — muncul setelah menjawab */}
         {sudahJawab && (
           <button
             onClick={handleNext}
-            className="w-full bg-[#BD9B2C] text-white font-bold p-3 rounded-xl"
+            disabled={submitting}
+            className="w-full bg-[#BD9B2C] hover:bg-[#a08020] text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
           >
-            {index + 1 >= totalSoal ? "Selesaikan Quest 🏆" : "Next →"}
+            {submitting ? (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : index + 1 >= totalSoal ? (
+              "Selesaikan Quest 🏆"
+            ) : (
+              "Lanjut →"
+            )}
           </button>
         )}
+
+        {/* Tombol keluar */}
+        <button
+          onClick={() => navigate("/peta")}
+          className="w-full mt-2 text-[#a08060] text-xs font-semibold py-2 hover:text-[#5c4033] transition-colors"
+        >
+          ✕ Keluar Quest
+        </button>
       </div>
     </div>
   );
