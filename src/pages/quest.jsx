@@ -203,73 +203,16 @@ export default function QuestPage() {
 }
 
 // ── Hasil Screen (Internal) ──
-// ── Hasil Screen (Internal) ──
 function HasilScreen({ hasil, markerName, onBack, onUlang }) {
-  return (
-    <div className="min-h-screen flex items-center justify-center p-6 font-lora bg-black/40 backdrop-blur-sm fixed inset-0 z-50 animate-fadeIn">
-      {/* Container Utama dengan Tekstur Kertas */}
-      <div 
-        className="relative w-full max-w-md p-8 rounded-[2rem] border-4 border-[#BD9B2C] shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden animate-scaleUp"
-        style={bgPaper}
-      >
-        {/* Ornamen Sudut (Opsional untuk kesan klasik) */}
-        <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-[#BD9B2C] rounded-tl-xl opacity-30"></div>
-        <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-[#BD9B2C] rounded-br-xl opacity-30"></div>
-
-        <div className="text-center relative z-10">
-          <h2 className="text-3xl font-black text-[#5c4033] mb-2 tracking-wide uppercase">
-            Hasil Quest
-          </h2>
-          <div className="h-1 w-24 bg-[#BD9B2C] mx-auto mb-8 rounded-full"></div>
-
-          {/* Skor Lingkaran atau Besar */}
-          <div className="mb-6">
-            <span className="text-7xl font-black text-[#BD9B2C] drop-shadow-md block">
-              {hasil.score}%
-            </span>
-            <p className="text-[#a08060] font-bold mt-2 text-lg">
-              {hasil.score >= 70 ? "Luar Biasa, Pendekar!" : "Terus Berlatih!"}
-            </p>
-          </div>
-
-          {/* XP Badge */}
-          <div className="bg-[#BD9B2C]/10 border border-[#BD9B2C]/30 py-3 px-6 rounded-2xl mb-8 inline-block">
-            <p className="text-[#5c4033] font-medium">
-              Kamu mendapatkan <span className="text-[#BD9B2C] font-black text-xl">{hasil.xpGained} XP</span>
-            </p>
-          </div>
-
-          {/* Tombol Aksi */}
-          <div className="flex flex-col gap-3">
-            <button 
-              onClick={onUlang} 
-              className="w-full py-4 bg-[#BD9B2C] text-white font-extrabold text-lg rounded-2xl shadow-[0_4px_0_rgb(160,128,32)] hover:shadow-none hover:translate-y-1 transition-all"
-            >
-              MAIN LAGI
-            </button>
-            <button 
-              onClick={onBack} 
-              className="w-full py-3 font-bold text-[#a08060] border-2 border-[#c9b896] rounded-2xl hover:bg-[#c9b896]/10 transition-colors"
-            >
-              Ke Peta
-            </button>
-          </div>
+    return (
+        <div className="text-center p-8 rounded-2xl border-2 border-[#BD9B2C]" style={bgPaper}>
+            <h2 className="text-2xl font-bold mb-4">Hasil Quest</h2>
+            <p className="text-4xl font-black text-[#BD9B2C] mb-2">{hasil.score}%</p>
+            <p className="mb-6">Kamu mendapatkan {hasil.xpGained} XP</p>
+            <div className="flex gap-4">
+                <button onClick={onBack} className="flex-1 p-3 border-2 border-[#c9b896] rounded-xl">Ke Peta</button>
+                <button onClick={onUlang} className="flex-1 p-3 bg-[#BD9B2C] text-white rounded-xl">Main Lagi</button>
+            </div>
         </div>
-      </div>
-
-      {/* Tambahkan Style Animasi di file CSS kamu atau inject via tag style */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes scaleUp {
-          from { transform: scale(0.8); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
-        .animate-scaleUp { animation: scaleUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-      `}} />
-    </div>
-  );
+    );
 }

@@ -1,69 +1,66 @@
 import { useState, useEffect } from "react";
 
-async function getUserCardData() {
-  // Ambil access_token dari localStorage (disimpan saat login/register)
-  const token = localStorage.getItem("access_token");
-
-  if (!token) {
-    throw new Error("NO_TOKEN");
-  }
-
-  const res = await fetch("https://nusa-api.vercel.app/auth/me", {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (res.status === 401) {
-    // Token expired — hapus token dan paksa login ulang
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    throw new Error("UNAUTHORIZED");
-  }
-
-  if (!res.ok) {
-    throw new Error("FETCH_FAILED");
-  }
-
-  const data = await res.json();
-
-  // Sesuaikan dengan shape response: { success, message, data: { ... } }
-  const user = data.data;
-
-  return {
-    nama: user.username,
-    avatar: user.avatarUrl ?? null,
-    xp: user.xp ?? 0,
-    xpMax: user.xpMax ?? 20000,
-  };
-}
+// Rumus level yang sama dengan Beranda (XP Max = level berikutnya * 500)
+const getXpForLevel = (level) => (level + 1) * 500;
 
 export default function UserCard() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
 
+  const fetchUserData = async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      setError("NO_TOKEN");
+      return;
+    }
+
+    try {
+      const res = await fetch("https://nusa-api.vercel.app/auth/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      const json = await res.json();
+      
+      if (res.status === 401) {
+        localStorage.removeItem("access_token");
+        throw new Error("UNAUTHORIZED");
+      }
+
+      if (json.success) {
+        const u = json.data;
+        setUser({
+          nama: u.username,
+          avatar: u.avatarUrl ?? null,
+          xp: u.totalXp, // Menggunakan totalXp dari database
+          xpMax: getXpForLevel(u.level), // Hitung batas XP berdasarkan level saat ini
+          level: u.level
+        });
+      }
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   useEffect(() => {
-    getUserCardData()
-      .then((data) => setUser(data))
-      .catch((err) => setError(err.message));
+    // Jalankan fetch pertama kali
+    fetchUserData();
+
+    // Listener agar sinkron saat Beranda update XP (handleJawabQuiz/handleClaim)
+    const handleUpdate = () => {
+      fetchUserData();
+    };
+
+    window.addEventListener("updateXP", handleUpdate);
+    return () => window.removeEventListener("updateXP", handleUpdate);
   }, []);
 
-  // Belum ada data & belum error → loading
-  if (!user && !error) return null;
-
-  // Tidak ada token atau unauthorized → jangan render card
-  if (error === "NO_TOKEN" || error === "UNAUTHORIZED") return null;
-
-  // Error lain (misal network error) → tetap tidak render, bisa diganti fallback UI
-  if (error) return null;
+  if (!user || error) return null;
 
   const percentage = Math.min((user.xp / user.xpMax) * 100, 100);
 
   return (
     <div className="fixed font-lora flex items-center">
-      {/* Avatar */}
+      {/* Avatar - Style Asli Kamu */}
       <div className="absolute -left-7 sm:-left-9 lg:-left-12">
         <div
           className="
@@ -80,13 +77,11 @@ export default function UserCard() {
               alt="avatar"
               className="w-full h-full object-cover"
               onError={(e) => {
-                // Fallback ke inisial jika gambar gagal load
                 e.currentTarget.style.display = "none";
                 e.currentTarget.nextSibling.style.display = "flex";
               }}
             />
           ) : null}
-          {/* Fallback inisial — ditampilkan jika avatar null atau gambar error */}
           <div
             className="w-full h-full bg-[#e8dcc0] items-center justify-center text-[#5c4033] font-black text-xl lg:text-2xl"
             style={{ display: user.avatar ? "none" : "flex" }}
@@ -96,7 +91,7 @@ export default function UserCard() {
         </div>
       </div>
 
-      {/* Card */}
+      {/* Card - Style Asli Kamu */}
       <div
         className="
           border-[3px] lg:border-[4px] border-[#BD9B2C] rounded-lg shadow-md
@@ -142,6 +137,10 @@ export default function UserCard() {
               style={{ width: `${percentage}%` }}
             />
           </div>
+        </div>
+        {/* Menampilkan level kecil di bawah bar agar user tahu progressnya */}
+        <div className="text-[10px] text-right font-bold text-[#a08060] -mt-1 opacity-70">
+           Lv.{user.level}
         </div>
       </div>
     </div>
