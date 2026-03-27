@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./layout/mainlayout";
 import Beranda from "./pages/beranda";
 import Akun from "./pages/akun";
@@ -9,47 +9,69 @@ import Login from "./auth/login";
 import Register from "./auth/register";
 import CharacterSelect from "./pages/characterselect";
 
+// ── Protected Route ───────────────────────────────────────────
+// Redirect ke /login jika tidak ada access_token di localStorage
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem("access_token");
+  if (!token) return <Navigate to="/login" replace />;
+  return children;
+}
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-
+        {/* ── Protected routes ── */}
         <Route
           path="/"
           element={
-            <MainLayout>
-              <Beranda />
-            </MainLayout>
+            <ProtectedRoute>
+              <MainLayout>
+                <Beranda />
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
-
         <Route
           path="/peta"
           element={
-            <MainLayout>
-              <Peta />
-            </MainLayout>
+            <ProtectedRoute>
+              <MainLayout>
+                <Peta />
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
-
         <Route
           path="/peringkat"
           element={
-            <MainLayout>
-              <Peringkat />
-            </MainLayout>
+            <ProtectedRoute>
+              <MainLayout>
+                <Peringkat />
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
-
         <Route
           path="/akun"
           element={
-            <MainLayout>
-              <Akun />
-            </MainLayout>
+            <ProtectedRoute>
+              <MainLayout>
+                <Akun />
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
-        <Route path="/quest/:slug" element={<Quest />} />
+        <Route
+          path="/quest/:slug"
+          element={
+            <ProtectedRoute>
+              <Quest />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ── Public routes ── */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/character-select" element={<CharacterSelect />} />
