@@ -203,16 +203,89 @@ export default function QuestPage() {
 }
 
 // ── Hasil Screen (Internal) ──
+// ── Hasil Screen (Internal) ──
+// ── Hasil Screen (Internal) ──
 function HasilScreen({ hasil, markerName, onBack, onUlang }) {
-    return (
-        <div className="text-center p-8 rounded-2xl border-2 border-[#BD9B2C]" style={bgPaper}>
-            <h2 className="text-2xl font-bold mb-4">Hasil Quest</h2>
-            <p className="text-4xl font-black text-[#BD9B2C] mb-2">{hasil.score}%</p>
-            <p className="mb-6">Kamu mendapatkan {hasil.xpGained} XP</p>
-            <div className="flex gap-4">
-                <button onClick={onBack} className="flex-1 p-3 border-2 border-[#c9b896] rounded-xl">Ke Peta</button>
-                <button onClick={onUlang} className="flex-1 p-3 bg-[#BD9B2C] text-white rounded-xl">Main Lagi</button>
-            </div>
+  // Hitung persentase warna berdasarkan skor (opsional, agar lebih dinamis)
+  // Skor rendah = Merah, Skor tinggi = Hijau Kerajaan
+  const scoreColor = hasil.score >= 70 ? "text-[#2D5A27]" : "text-[#7a3b1c]";
+
+  return (
+    <div 
+      className="min-h-screen flex items-center justify-center p-6 font-lora fixed inset-0 z-50 animate-fadeIn"
+      style={bgPage} // Tetap gunakan background peta di paling luar
+    >
+      {/* Overlay Gelap agar background peta tidak terlalu mencolok */}
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"></div>
+
+      {/* Container Modal - Textur Kertas */}
+      <div 
+        className="relative w-full max-w-md p-10 rounded-[2.5rem] border-[6px] border-[#BD9B2C] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] overflow-hidden animate-scaleUp"
+        style={bgPaper} // Background kertas di sini
+      >
+        <div className="text-center relative z-10">
+          
+          {/* PERBAIKAN: Judul dibuat coklat tua */}
+          <h2 className="text-3xl font-black text-[#5c4033] mb-1 tracking-tight uppercase">
+            Hasil Quest
+          </h2>
+          <div className="h-1 w-16 bg-[#BD9B2C] mx-auto mb-8 rounded-full opacity-50"></div>
+
+          {/* Skor Besar */}
+          <div className="mb-6 scale-110">
+            
+            {/* PERBAIKAN: Gunakan warna coklat tua atau emas tua untuk kontras */}
+            <span className={`text-7xl font-black ${scoreColor} drop-shadow-[0_2px_1px_rgba(255,255,255,0.5)] block`}>
+              {hasil.score}%
+            </span>
+            
+            {/* PERBAIKAN: Teks keterangan dibuat Coklat Menengah */}
+            <p className="text-[#a08060] font-bold mt-1 text-sm tracking-widest uppercase">
+              {hasil.score >= 70 ? "Luar Bisa, Pendekar!" : "Terus Berlatih!"}
+            </p>
+          </div>
+
+          {/* XP Badge */}
+          {/* PERBAIKAN: Latar badge dibuat sedikit lebih gelap (krem tua) agar menonjol */}
+          <div className="bg-[#e8dcc0] border border-[#BD9B2C]/20 py-3 px-8 rounded-2xl mb-10 inline-block shadow-inner">
+            
+            {/* PERBAIKAN: Teks XP dibuat Coklat Tua, angkanya Emas Tua */}
+            <p className="text-[#5c4033] text-sm font-medium">
+              Kamu mendapatkan <span className="text-[#81691A] font-black text-xl">{hasil.xpGained} XP</span>
+            </p>
+          </div>
+
+          {/* Tombol Aksi - Tidak berubah karena warnanya sudah kontras */}
+          <div className="flex flex-col gap-4">
+            <button 
+              onClick={onUlang} 
+              className="w-full py-4 bg-[#BD9B2C] text-white font-extrabold text-lg rounded-2xl shadow-[0_5px_0_rgb(150,120,30)] active:shadow-none active:translate-y-1 transition-all uppercase tracking-wider"
+            >
+              Main Lagi
+            </button>
+            <button 
+              onClick={onBack} 
+              className="w-full py-3 font-bold text-[#a08060] border-2 border-[#c9b896]/50 rounded-2xl hover:bg-white/50 transition-all"
+            >
+              Ke Peta
+            </button>
+          </div>
         </div>
-    );
+      </div>
+
+      {/* Style Animasi */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes scaleUp {
+          from { transform: scale(0.9); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        .animate-fadeIn { animation: fadeIn 0.4s ease-out; }
+        .animate-scaleUp { animation: scaleUp 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+      `}} />
+    </div>
+  );
 }
