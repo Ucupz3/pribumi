@@ -15,6 +15,10 @@ const bgStyle = {
   backgroundRepeat: "no-repeat",
 };
 
+// ── Helper XP ─────────────────────────────────────────────────
+// Sesuaikan dengan fungsi calculateLevel di backend
+const getXpForLevel = (level) => level * 500;
+
 // ===== GEMBOK SVG =====
 function GembokIcon({ className }) {
   return (
@@ -245,7 +249,6 @@ const Akun = () => {
 
     const fetchAll = async () => {
       try {
-        // Fetch profil dan progress secara paralel
         const [profileData, progressData] = await Promise.all([
           getUserProfile(),
           getUserProgress(),
@@ -256,43 +259,25 @@ const Akun = () => {
           return;
         }
 
-        setUser(profileData);
+        // ── Hitung xpMax dari level karena backend tidak return field ini ──
+        const level = profileData.level ?? 1;
+        const xpMax = getXpForLevel(level + 1);
+        setUser({ ...profileData, xpMax });
 
-        if (progressData) {
-          // Endpoint /users/me/progress berhasil — pakai data asli
-          // Coba berbagai kemungkinan nama field dari backend
+        // ── FIX: progressData shape = { user, stats, progress } ──────────
+        // Akses via progressData.stats, bukan progressData langsung
+        if (progressData?.stats) {
+          const s = progressData.stats;
           setStats({
-            totalXP:
-              progressData.totalXp ??
-              progressData.totalXP ??
-              progressData.xp ??
-              0,
-            pulauDijelajahi:
-              progressData.pulauDijelajahi ??
-              progressData.islandsExplored ??
-              progressData.islands ??
-              0,
-            questSelesai:
-              progressData.questSelesai ??
-              progressData.questsCompleted ??
-              progressData.quests ??
-              0,
-            menitBermain:
-              progressData.menitBermain ??
-              progressData.minutesPlayed ??
-              progressData.playMinutes ??
-              0,
-            questPerfect:
-              progressData.questPerfect ??
-              progressData.perfectQuests ??
-              progressData.perfect ??
-              0,
-            pulauKomplit:
-              progressData.pulauKomplit ?? progressData.islandsCompleted ?? 0,
+            totalXP: s.totalXP ?? s.totalXp ?? profileData.xp ?? 0,
+            pulauDijelajahi: s.pulauDijelajahi ?? s.islandsExplored ?? 0,
+            questSelesai: s.questSelesai ?? s.markersCompleted ?? 0,
+            menitBermain: s.menitBermain ?? s.minutesPlayed ?? 0,
+            questPerfect: s.questPerfect ?? s.perfectQuests ?? 0,
+            pulauKomplit: s.pulauKomplit ?? s.islandsCompleted ?? 0,
           });
         } else {
-          // Endpoint /users/me/progress gagal — fallback dari data profil
-          // Badge lain terkunci, hanya XP Hunter yang bisa dihitung
+          // Fallback jika progress gagal
           setStats({
             totalXP: profileData.xp ?? 0,
             pulauDijelajahi: 0,
@@ -330,9 +315,16 @@ const Akun = () => {
 
   const xpPersen = Math.min((user.xp / user.xpMax) * 100, 100);
 
+  // ── FIX: handleSave update state user dengan data terbaru dari API ──
   const handleSave = async (updated) => {
     const data = await updateUserProfile(updated);
-    if (data) setUser(data);
+    if (data) {
+      // updateUserProfile sudah return mapped user via mapUser()
+      // Pertahankan xpMax yang sudah dihitung sebelumnya
+      const level = data.level ?? user.level;
+      const xpMax = getXpForLevel(level + 1);
+      setUser({ ...data, xpMax });
+    }
   };
 
   return (
@@ -375,7 +367,7 @@ const Akun = () => {
                     {xpPersen > 20 && (
                       <span className="text-xs font-bold text-white whitespace-nowrap">
                         {(user.xp ?? 0).toLocaleString("id-ID")} /{" "}
-                        {(user.xpMax ?? 20000).toLocaleString("id-ID")}
+                        {(user.xpMax ?? 0).toLocaleString("id-ID")}
                       </span>
                     )}
                   </div>
@@ -383,7 +375,7 @@ const Akun = () => {
                 {xpPersen <= 20 && (
                   <p className="text-xs text-[#a08060]">
                     {(user.xp ?? 0).toLocaleString("id-ID")} /{" "}
-                    {(user.xpMax ?? 20000).toLocaleString("id-ID")} XP
+                    {(user.xpMax ?? 0).toLocaleString("id-ID")} XP
                   </p>
                 )}
               </div>
@@ -399,7 +391,6 @@ const Akun = () => {
 
           <div className="grid grid-cols-3 md:grid-cols-5 gap-6 justify-items-center border-b-2 border-[#C2AF9F] pb-8 mb-6">
             {BADGE_CATEGORIES.map((cat) => {
-              // FIX UTAMA: pakai state `stats` terpisah, bukan user.stats yang tidak ada
               const tierIndex = stats ? cat.cek(stats) : -1;
               const isUnlocked = tierIndex >= 0;
               const activeTier = isUnlocked ? cat.tiers[tierIndex] : null;
@@ -433,7 +424,6 @@ const Akun = () => {
                             e.currentTarget.nextSibling.style.display = "flex";
                           }}
                         />
-                        {/* Fallback emoji jika gambar badge belum ada */}
                         <div
                           className="w-full h-full items-center justify-center text-4xl"
                           style={{ display: "none" }}
