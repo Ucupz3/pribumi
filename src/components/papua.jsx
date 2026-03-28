@@ -51,7 +51,7 @@ export default function Papua({ onMarkerClick }) {
         .from("markers")
         .select(`
           id, name, slug, pos_top, pos_left, 
-          xp_reward, total_soal, wilayah, xp_required,
+          xp_reward, total_soal, wilayah, xp_required,thumbnail,
           islands!inner(slug)
         `)
         .eq("islands.slug", "papua");
@@ -89,7 +89,7 @@ export default function Papua({ onMarkerClick }) {
   };
 
   return (
-    <div className="absolute top-[60%] right-[1%] -translate-y-1/2 w-[28%] z-[10]">
+    <div className="absolute top-[60%] right-[1%] -translate-y-1/2 w-[28%] z-50">
       <div className="relative">
         <img
           src="/images/Pulau/Papua.png"

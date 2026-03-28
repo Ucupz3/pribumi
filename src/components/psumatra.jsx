@@ -59,6 +59,7 @@ export default function Sumatra({ onMarkerClick }) {
           total_soal,
           wilayah,
           xp_required,
+          thumbnail,
           islands!inner(slug)
         `)
         .eq("islands.slug", "sumatra"); // Filter slug sumatra

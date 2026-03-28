@@ -55,6 +55,7 @@ export default function Sulawesi({ onMarkerClick }) {
           total_soal,
           wilayah,
           xp_required,
+          thumbnail,
           islands!inner(slug)
         `)
         .eq("islands.slug", "sulawesimlk");

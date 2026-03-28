@@ -51,7 +51,7 @@ export default function Jawa({ onMarkerClick }) {
         .from("markers")
         .select(`
           id, name, slug, pos_top, pos_left, 
-          xp_reward, total_soal, wilayah, xp_required,
+          xp_reward, total_soal, wilayah, xp_required,thumbnail,
           islands!inner(slug)
         `)
         .eq("islands.slug", "jawa");
