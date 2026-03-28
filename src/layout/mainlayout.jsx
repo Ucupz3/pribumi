@@ -1,4 +1,4 @@
-// MainLayout.jsx
+// mainlayout.jsx
 import { useLocation } from "react-router-dom";
 import Sidebar from "../components/sidebar";
 import UserCard from "../components/usercard";
@@ -18,12 +18,7 @@ export default function MainLayout({ children }) {
           top-6
           lg:left-24 md:left-20 sm:left-16 left-12
           z-40">
-            <UserCard
-              name="Kimi Hime"
-              level={12}
-              xp={60}
-              avatar="/images/kimi.png"
-            />
+            <UserCard />
           </div>
         )}
 

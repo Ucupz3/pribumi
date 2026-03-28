@@ -13,7 +13,12 @@ import CharacterSelect from "./pages/characterselect";
 // Redirect ke /login jika tidak ada access_token di localStorage
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("access_token");
-  if (!token) return <Navigate to="/login" replace />;
+  
+  // Kalau benar-benar kosong (user belum pernah login / sudah logout), baru ke login
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  
   return children;
 }
 

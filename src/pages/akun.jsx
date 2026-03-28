@@ -1,7 +1,11 @@
+// Tambah useNavigate di import
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ tambah ini
 import { BADGE_CATEGORIES } from "../config/badgeConfig";
 import { getUserProfile, updateUserProfile } from "../api/userApi";
 import { getUserProgress } from "../api/badgesApi";
+import { clearBerandaCache } from "../api/berandaApi";
+import { cacheHelper } from "../api/cacheHelper";
 
 const AVATAR_OPTIONS = [
   "/images/avatar/mas_jaka.png",
@@ -260,17 +264,19 @@ return (
 
 // ===== HALAMAN AKUN =====
 const Akun = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
 
   const handleLogout = () => {
-    // Hapus token dari localStorage
+    cacheHelper.clearAll();
+    clearBerandaCache();
     localStorage.removeItem("access_token");
-
-    // Redirect ke halaman login
-    window.location.href = "/login"; // kalau pakai react-router: navigate("/login")
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user_id");
+    navigate("/login", { replace: true });
   };
 
   useEffect(() => {
@@ -349,16 +355,15 @@ const Akun = () => {
   const xpPersen = Math.min((user.xp / user.xpMax) * 100, 100);
 
   // ── FIX: handleSave update state user dengan data terbaru dari API ──
-  const handleSave = async (updated) => {
-    const data = await updateUserProfile(updated);
-    if (data) {
-      // updateUserProfile sudah return mapped user via mapUser()
-      // Pertahankan xpMax yang sudah dihitung sebelumnya
-      const level = data.level ?? user.level;
-      const xpMax = getXpForLevel(level + 1);
-      setUser({ ...data, xpMax });
-    }
-  };
+const handleSave = async (updated) => {
+  const data = await updateUserProfile(updated);
+  if (data) {
+    // ✅ hapus clearProgressCache(), tidak perlu
+    const level = data.level ?? user.level;
+    const xpMax = getXpForLevel(level + 1);
+    setUser({ ...data, xpMax });
+  }
+};
 
   return (
     <div

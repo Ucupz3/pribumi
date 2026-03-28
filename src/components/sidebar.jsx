@@ -1,4 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { clearBerandaCache } from "../api/berandaApi";
+import { cacheHelper } from "../api/cacheHelper";
 
 // ===== ICONS =====
 function IconBeranda() {
@@ -108,11 +110,16 @@ const bgBottomStyle = {
 export default function Sidebar() {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    navigate("/login", { replace: true });
-  };
+const handleLogout = () => {
+  cacheHelper.clearAll();
+  clearBerandaCache();
+
+  // 🔥 FIX: bersihin total
+  localStorage.clear();
+  sessionStorage.clear();
+
+  navigate("/login", { replace: true });
+};
 
   return (
     <>

@@ -37,33 +37,33 @@ const Peringkat = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Karena logic redirect sudah terpusat di UserCard, kita tidak perlu repot
+    // membuat pengecekan token manual yang ribet di sini.
     const fetchData = async () => {
-      // FIX 1: Bungkus dengan try/catch agar error tidak menyebabkan blank screen
       try {
         const result = await getLeaderboard();
 
-        // FIX 2: Pastikan yang di-set ke state adalah array
-        // Tangani berbagai kemungkinan shape response:
-        // - Array langsung           : [{ ... }, { ... }]
-        // - Response wrapper         : { data: [...] }
-        // - Response wrapper nested  : { success: true, data: { ... } }
         let list = [];
         if (Array.isArray(result)) {
           list = result;
         } else if (Array.isArray(result?.data)) {
           list = result.data;
         } else {
-          // Jika shape tidak dikenali, log untuk debugging
           console.warn("Unexpected leaderboard response shape:", result);
         }
 
         setPlayers(list);
       } catch (err) {
-        // FIX 3: Tangkap error dan tampilkan pesan, bukan blank screen
         console.error("Gagal memuat leaderboard:", err);
+        
+        // Error UNAUTHORIZED akan memicu UserCard untuk logout otomatis, 
+        // jadi kita cukup pastikan halaman tidak menampilkan error aneh saat proses redirect.
+        if (err.message.includes("UNAUTHORIZED") || err.message.includes("Sesi telah habis")) {
+           return; 
+        }
+
         setError("Gagal memuat data peringkat. Silakan coba lagi.");
       } finally {
-        // FIX 4: Gunakan finally agar loading selalu dimatikan
         setLoading(false);
       }
     };
@@ -97,7 +97,6 @@ const Peringkat = () => {
     );
   }
 
-  // FIX 5: Tangani state kosong setelah loading selesai
   if (players.length === 0) {
     return (
       <div
@@ -137,14 +136,13 @@ const Peringkat = () => {
               {isFirst && <span className="text-2xl mb-1">👑</span>}
 
               <div
-                className={`${medal.size} rounded-full border-4 ${medal.border} overflow-hidden bg-[#e8dcc0]`}
+                className={`${medal.size} rounded-full border-4 ${medal.border} overflow-hidden bg-[#e8dcc0] flex items-center justify-center relative`}
               >
                 {player.avatar ? (
                   <img
                     src={player.avatar}
-                    alt={player.username}
-                    className="w-full h-full object-cover"
-                    // FIX 6: Fallback avatar jika gambar gagal load
+                    alt={player.username || player.name}
+                    className="w-full h-full object-cover absolute inset-0"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
                       e.currentTarget.nextSibling.style.display = "flex";
@@ -152,7 +150,7 @@ const Peringkat = () => {
                   />
                 ) : null}
                 <div
-                  className="w-full h-full items-center justify-center text-[#a08060] font-black text-xl"
+                  className="w-full h-full flex items-center justify-center text-[#a08060] font-black text-xl bg-[#e8dcc0] z-0"
                   style={{ display: player.avatar ? "none" : "flex" }}
                 >
                   {player.name?.charAt(0)?.toUpperCase() || "?"}
@@ -196,21 +194,21 @@ const Peringkat = () => {
                   #{rank}
                 </span>
 
-                <div className="w-10 h-10 rounded-full bg-[#e8dcc0] border-2 border-[#c9b896] overflow-hidden flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-[#e8dcc0] border-2 border-[#c9b896] overflow-hidden flex items-center justify-center relative">
                   {player.avatar ? (
                     <img
                       src={player.avatar}
                       alt={player.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover absolute inset-0"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
-                        e.currentTarget.nextSibling.style.display = "inline";
+                        e.currentTarget.nextSibling.style.display = "flex";
                       }}
                     />
                   ) : null}
                   <span
-                    className="text-[#a08060] font-black text-sm"
-                    style={{ display: player.avatar ? "none" : "inline" }}
+                    className="text-[#a08060] font-black text-sm z-0 flex items-center justify-center w-full h-full bg-[#e8dcc0]"
+                    style={{ display: player.avatar ? "none" : "flex" }}
                   >
                     {player.name?.charAt(0)?.toUpperCase() || "?"}
                   </span>

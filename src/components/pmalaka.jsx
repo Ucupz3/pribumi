@@ -13,55 +13,24 @@ function LockIcon({ size = 28 }) {
   );
 }
 
-export default function Sulawesi({ onMarkerClick }) {
+// ✅ Sekarang menerima userXP dari props
+export default function Sulawesi({ onMarkerClick, userXP }) {
   const [markers, setMarkers] = useState([]);
-  const [realXP, setRealXP] = useState(0);
 
   useEffect(() => {
     const getData = async () => {
-      // 1. Ambil token & Sinkronisasi XP dari API
-      const token = localStorage.getItem("access_token");
-
-      if (!token) {
-        console.log("❌ Belum login");
-        return;
-      }
-
-      try {
-        const res = await fetch("https://nusa-api.vercel.app/auth/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const json = await res.json();
-        if (json.success) {
-          setRealXP(json.data.totalXp);
-        }
-      } catch (err) {
-        console.error("Gagal sinkron XP:", err.message);
-      }
-
-      // 2. Ambil marker khusus Sulawesi/Malaka
+      // ✅ Cukup fetch data marker saja dari Supabase
       const { data, error } = await supabase
         .from("markers")
         .select(`
-          id,
-          name,
-          slug,
-          pos_top,
-          pos_left,
-          xp_reward,
-          total_soal,
-          wilayah,
-          xp_required,
-          thumbnail,
+          id, name, slug, pos_top, pos_left, 
+          xp_reward, total_soal, wilayah, xp_required, thumbnail,
           islands!inner(slug)
         `)
         .eq("islands.slug", "sulawesimlk");
 
       if (error) {
-        console.error("Gagal ambil marker:", error.message);
+        console.error("Gagal ambil marker Sulawesi:", error.message);
       } else {
         setMarkers(data || []);
       }
@@ -93,17 +62,17 @@ export default function Sulawesi({ onMarkerClick }) {
         <img 
           src="/images/Pulau/Malaka.png" 
           alt="Pulau Sulawesi Malaka" 
-          className="w-[74%] min-w-[160px] h-auto pointer-events-none" 
+          className="w-[74%] min-w-[160px] h-auto pointer-events-none select-none" 
         />
 
         {markers.map((m) => {
-          // Logika Unlock sinkron dengan realXP
-          const isUnlocked = Number(realXP) >= Number(m.xp_required);
+          // ✅ Gunakan userXP dari props untuk cek gembok
+          const isUnlocked = Number(userXP) >= Number(m.xp_required);
 
           return (
             <div
               key={m.id}
-              className="absolute group"
+              className="absolute group z-50"
               style={{ 
                 top: m.pos_top, 
                 left: m.pos_left, 
@@ -111,23 +80,25 @@ export default function Sulawesi({ onMarkerClick }) {
               }}
             >
               {isUnlocked ? (
+                // 🟢 Tampilan Terbuka
                 <div 
                   onClick={(e) => handleClick(e, m, true)} 
-                  className="cursor-pointer z-50"
+                  className="cursor-pointer"
                 >
                   <div className="relative w-4 h-4">
-                    <div className="absolute inset-0 bg-yellow-400 rounded-full animate-ping"></div>
-                    <div className="relative w-4 h-4 bg-yellow-500 rounded-full border-2 border-white"></div>
+                    <div className="absolute inset-0 bg-yellow-400 rounded-full animate-ping opacity-75"></div>
+                    <div className="relative w-4 h-4 bg-yellow-500 rounded-full border-2 border-white shadow-sm"></div>
                   </div>
 
-                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">
+                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-black text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                     {m.name}
                   </span>
                 </div>
               ) : (
+                // 🔒 Tampilan Terkunci
                 <div className="cursor-not-allowed flex flex-col items-center">
                   <LockIcon size={26} />
-                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-gray-800 text-yellow-400 text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap inline-block">
+                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-gray-800 text-yellow-400 text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap inline-block pointer-events-none">
                     🔒 {m.xp_required} XP
                   </span>
                 </div>

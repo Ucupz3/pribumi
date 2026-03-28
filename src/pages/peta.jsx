@@ -1,33 +1,63 @@
-// ✅ PETA.JSX - ganti useEffect getUserXP dengan ini
-
 import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabase";
+import { useNavigate } from "react-router-dom";
 import PetaNusantara from "./petanusantara";
+import { getUserProfile } from "../api/userApi";
 
 const Peta = () => {
+  const navigate = useNavigate();
   const [userXP, setUserXP] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchXP = async () => {
-      // ✅ Ambil dari auth beneran
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (user) {
-        const { data } = await supabase
-          .from("users")
-          .select("xp")
-          .eq("id", user.id)
-          .single();
-
-        setUserXP(data?.xp || 0);
+      try {
+        const userData = await getUserProfile();
+        if (userData) {
+          setUserXP(userData.xp || 0);
+        } else {
+          setError("Gagal mengambil data pengguna.");
+        }
+      } catch (err) {
+        setError(err?.message ?? "Terjadi kesalahan.");
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
     fetchXP();
   }, []);
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center font-lora"
+        style={{ backgroundImage: "url('/images/bglaut.jpg')", backgroundSize: "cover" }}
+      >
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="relative flex flex-col items-center gap-3 text-center px-6">
+          <span className="text-4xl">😕</span>
+          <p className="text-white font-black text-base">Gagal memuat peta</p>
+          <p className="text-white/70 text-sm">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-2 px-4 py-2 bg-gradient-to-r from-[#BD9B2C] to-[#81691A] text-white rounded-xl font-bold text-sm"
+          >
+            Coba Lagi
+          </button>
+          <button
+            onClick={() => {
+              localStorage.removeItem("access_token");
+              localStorage.removeItem("refresh_token");
+              navigate("/login", { replace: true });
+            }}
+            className="text-xs text-white/60 underline underline-offset-2 hover:text-white transition-colors"
+          >
+            Atau coba logout dan masuk kembali
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col font-lora relative overflow-hidden touch-none">
@@ -48,7 +78,7 @@ const Peta = () => {
             <p className="text-white font-semibold font-lora">Memuat Peta...</p>
           </div>
         ) : (
-          <PetaNusantara userXP={userXP} />  // ✅ XP real dikirim ke semua pulau
+          <PetaNusantara userXP={userXP} />
         )}
       </div>
     </div>

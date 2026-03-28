@@ -24,17 +24,25 @@ export default function Login() {
       });
 
       const data = await res.json();
+      console.log("LOGIN DATA:", data); // 🔥 debug
 
       if (!res.ok || !data.success) {
         setError(data.message ?? "Email atau password salah");
         return;
       }
+
+      // ✅ SIMPAN SEMUA DATA PENTING
       localStorage.setItem("access_token", data.data.access_token);
       localStorage.setItem("refresh_token", data.data.refresh_token);
 
+      // 🔥 FIX UTAMA (penyebab bug kamu)
+      if (data.data.user?.id) {
+        localStorage.setItem("user_id", data.data.user.id);
+      }
+
       navigate("/");
     } catch (err) {
-      setError("Tidak dapat terhubung ke server. Periksa koneksi Anda.");
+      setError("Tidak dapat terhubung ke server.");
     } finally {
       setLoading(false);
     }
