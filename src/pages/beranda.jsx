@@ -279,7 +279,7 @@ export default function Beranda() {
                 )}
               </div>
 
-              <div className="px-5 py-6 space-y-2 relative">
+              <div className="px-5 lg:py-3 py-6 space-y-2 relative">
                 <p className="text-[#5c4033] font-semibold text-sm leading-snug">
                   {quizHarian.pertanyaan}
                 </p>
